@@ -53,34 +53,10 @@ void load_network(std::string filename) {
 				}
 				edges.push_back(conn); // record edge
 				nodemap[node] = edges;
-
-				// if (node != curr_node) {
-				// 	std::cout << "NEW KEY: " << node << '\n';
-
-				// 	// update nodemap
-				// 	sz = curr_vec.size();
-				// 	nodemap.emplace(curr_node, std::make_pair(sz, curr_vec));
-
-				// 	// reset current node and vector
-				// 	curr_node = node;
-				// 	curr_vec.clear();
-
-				// 	// record the initial entry to the new edge set
-				// 	curr_vec.push_back (conn);
-				// } else { 
-				// 	// record edge
-				// 	curr_vec.push_back (conn);
-				// }
 			} else {
 				std::cout << "Input Error: 2 tokens per line expected." << std::endl;
 			}
    		}
-   		// final update to nodemap
-   		// sz = curr_vec.size();
-		// nodemap.emplace(curr_node, std::make_pair(sz, curr_vec));
-
-		// store total node count globally
-		// numNodes = curr_no
 	}
 	infile.close( );
 }
@@ -109,7 +85,6 @@ int main( int argc , char** argv ) {
 	std::cout << "nodemap contains:" << std::endl;
 	for (auto& kv: nodemap) {
 		std::cout << kv.first << ": ";
-		// std::pair<std::vector<int>::size_type, std::vector<int> > p = kv.second;
 		std::cout << "size=" << kv.second.size() << std::endl;
 		for (auto& edge: kv.second) {
 			std::cout << edge << ", ";
