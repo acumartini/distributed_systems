@@ -10,7 +10,7 @@
 #include <iostream>
 #include <algorithm>
 // #include <boost/algorithm/string.hpp>
-// #include <sstream> 
+#include <sstream> 
 #include <iterator>
 #include <vector>
 #include <unordered_map>
@@ -104,17 +104,20 @@ void load_network(std::string filename) {
 			std::cout << "line#" << ++line_count << " : " << line <<std::endl; 
 
 			// split the line into tokens to get the kv pair
-    		// std::istringstream buf(line);
-		    // std::istream_iterator<std::string> beg(buf), end;
-		    // std::vector<std::string> tokens(beg, end); // tokenized!
+    		std::istringstream buf(line);
+		    std::istream_iterator<std::string> beg(buf), end;
+		    std::vector<std::string> tokens(beg, end); // tokenized!
 		    // boost::split(tokens, line, boost::is_any_of(' '));
 
 		    // validate token input size and update nodemap
-		    // sz = tokens.size();
-		    if (get_nodes(line, nodes) != -1) {
+		    sz = tokens.size();
+		    // if (get_nodes(line, nodes) != -1) {
 				// convert key to integer
-				int source = nodes.first;
-				int target = nodes.second;
+				// int source = nodes.first;
+				// int target = nodes.second;
+		    if (sz == 2) {
+				int source = stoi(tokens[0]);
+				int target = stoi(tokens[1]);
 
 				// verify valid edge
 				if (source != target) {
