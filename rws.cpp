@@ -8,9 +8,8 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-// #include <algorithm>
-// #include <boost/algorithm/string.hpp>
-// #include <sstream> 
+#include <algorithm>
+#include <numeric> 
 #include <iterator>
 #include <vector>
 #include <unordered_map>
@@ -19,9 +18,6 @@
 
 #include <time.h>
 #include <assert.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <ctype.h>
 
 typedef std::unordered_set<int> EdgeSet;
 typedef std::unordered_map<int, EdgeSet*> NodeMap;
@@ -122,16 +118,31 @@ void load_network(std::string filename) {
 }
 
 /*
- * Normalizes CreditVec C in place.
+ * Returns a normalized copy of the given CreditVec.
  */
-void normalize(CreditVec &C) {
-	double sum = 0;
-	for (auto& credit: C) {
-		sum += credit;
+CreditVec normalize(CreditVec &C) {
+	CreditVec C_ = C;
+	double sum = std::accumulate(std::begin(C_), std::end(C_), 0.0);
+	for (int i=0; i<C_.size(); ++i) {
+		C_[i] /= sum;
 	}
-	for (int i=0; i<C.size(); ++i) {
-		C[i] /= sum;
-	}
+
+	return C_;
+}
+
+/*
+ * Computes the standard deviation of the values in the given CreditVec.
+ */
+double compute_stdev(CreditVec &C) {
+	double sum = std::accumulate(std::begin(C), std::end(C), 0.0);
+	double m =  sum / C.size();
+
+	double accum = 0.0;
+	std::for_each (std::begin(C), std::end(C), [&](const double d) {
+		accum += (d - m) * (d - m);
+	});
+
+	return sqrt(accum / (C.size()-1));
 }
 
 /*
@@ -141,26 +152,20 @@ void normalize(CreditVec &C) {
  * @params: C - stores the current credit values for each node in the network
  * 			C_ - stores the credit values for each node at time step t+1
  */
-void compute_credit(CreditVec &C, CreditVec &C_) {
+void credit_update(CreditVec &C, CreditVec &C_) {
 	double sum;
 	int i;
 
+	// compute credit for the next time step
 	for (auto& kv: nodemap) {
 		sum = 0;
 		for (auto& edge: (*kv.second)) {
 			i = imap[edge];
-			// std::cout << "edge: " << edge << std::endl;
-			// std::cout << "credit update: " << C[i] / nodemap[edge].size() << std::endl;
 			sum += C[i] / nodemap[edge]->size();
 		}
-		// std::cout << sum << std::endl;
 		i = imap[kv.first];
 		C_[i] = sum;
 	}
-
-	// noramlize credit vector
-	normalize(C_);
-	C = C_;
 }
 
 int main( int argc , char** argv ) {
@@ -200,14 +205,19 @@ int main( int argc , char** argv ) {
 
 	for (int i=0; i<numSteps; ++i) {
 		std::cout << "step : " << i << std::endl;
-		compute_credit(C, C_);
-	}
+		credit_update(C, C_);
+		C = C_; // C(t+1) becomes C(t) for next iteration
 
-	// check final credit
-	for (auto& credit: C) {
-		std::cout << credit << std::endl;
+		// noramlize C and test for distribution convergence using stdev
+		// CreditVec normC;
+		// double stdev;
+		// normC = normalize(C);
+		// stdev = compute_stdev(normC);
+		// std::cout << "stdev: " << stdev << std::endl;
+		// for (int j=0; j<numSteps; ++j) {
+		// 	std::cout << j << " : " << C[j] << std::endl;
+		// }
 	}
-	std::cout << "C.size()=" << C.size() << std::endl;
 
 	return 0 ;
 }
