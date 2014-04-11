@@ -8,9 +8,9 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-#include <algorithm>
+// #include <algorithm>
 // #include <boost/algorithm/string.hpp>
-#include <sstream> 
+// #include <sstream> 
 #include <iterator>
 #include <vector>
 #include <unordered_map>
@@ -19,9 +19,9 @@
 
 #include <time.h>
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <ctype.h>
 
 typedef std::unordered_set<int> EdgeSet;
 typedef std::unordered_map<int, EdgeSet*> NodeMap;
@@ -29,31 +29,10 @@ typedef std::unordered_map<int, int> IndexMap;
 typedef std::pair<int, int> NodePair;
 typedef std::vector<double> CreditVec;
 
-
 // global network storage
-// std::unordered_map<int,std::vector<int> > nodemap;
 NodeMap nodemap;
 IndexMap imap;
 
-
-// std::vector<std::string> string_split(std::string s, const char delimiter) {
-//     size_t start=0;
-//     size_t end=s.find_first_of(delimiter);
-    
-//     std::vector<std::string> output;
-    
-//     while (end <= std::string::npos) {
-// 	    output.emplace_back(s.substr(start, end-start));
-
-// 	    if (end == std::string::npos) 
-// 	    	break;
-
-//     	start=end+1;
-//     	end = s.find_first_of(delimiter, start);
-//     }
-    
-//     return output;
-// }
 
 int get_nodes(const std::string &line, NodePair &nodes) {
 	std::string source, target;
@@ -74,9 +53,6 @@ int get_nodes(const std::string &line, NodePair &nodes) {
 	while (isdigit(c)) { c = line[++j]; }
 	target = line.substr(i, j);
 
-	// std::cout << "source: " << source << std::endl;
-	// std::cout << "target: " << target << std::endl;
-
 	// test for empty strings
 	if (source.length() == 0 || target.length() == 0) { return -1; }
 
@@ -92,33 +68,24 @@ int get_nodes(const std::string &line, NodePair &nodes) {
  */
 void load_network(std::string filename) {
 	std::string line;
-	std::ifstream infile(filename);
 	NodePair nodes;
-	std::vector<int>::size_type sz;
 	NodeMap::const_iterator got;
 	EdgeSet *edges;
-	int line_count = -1;
+	int line_count = -1, output_mod = 100000;
 
+	// load file and iterate through each line of input
+	std::ifstream infile(filename);
 	if (infile) {
-		// get the line entry
 		while (getline(infile, line, '\n')) {
-			std::cout << "line#" << ++line_count << " : " << line <<std::endl; 
+			// output line_count every output_mod lines
+			++line_count;
+			if (line_count % output_mod == 0)
+				std::cout << "line#" << line_count << std::endl;
 
-			// split the line into tokens to get the kv pair
-    		// std::istringstream buf(line);
-		    // std::istream_iterator<std::string> beg(buf), end;
-		    // std::vector<std::string> tokens(beg, end); // tokenized!
-		    // boost::split(tokens, line, boost::is_any_of(' '));
-
-		    // validate token input size and update nodemap
+		    // convert key to integer and update nodemap with valid input
 		    if (get_nodes(line, nodes) != -1) {
-				// convert key to integer
 				int source = nodes.first;
 				int target = nodes.second;
-		    // sz = tokens.size();
-		  //   if (sz == 2) {
-				// int source = stoi(tokens[0]);
-				// int target = stoi(tokens[1]);
 
 				// verify valid edge
 				if (source != target) {
@@ -176,24 +143,24 @@ void normalize(CreditVec &C) {
  */
 void compute_credit(CreditVec &C, CreditVec &C_) {
 	double sum;
-	int node, i;
+	int i;
 
-	// for (auto& kv: nodemap) {
-	// 	sum = 0;
-	// 	for (auto& edge: kv.second) {
-	// 		i = imap[edge];
-	// 		// std::cout << "edge: " << edge << std::endl;
-	// 		// std::cout << "credit update: " << C[i] / nodemap[edge].size() << std::endl;
-	// 		sum += C[i] / nodemap[edge].size();
-	// 	}
-	// 	// std::cout << sum << std::endl;
-	// 	i = imap[kv.first];
-	// 	C_[i] = sum;
-	// }
+	for (auto& kv: nodemap) {
+		sum = 0;
+		for (auto& edge: (*kv.second)) {
+			i = imap[edge];
+			// std::cout << "edge: " << edge << std::endl;
+			// std::cout << "credit update: " << C[i] / nodemap[edge].size() << std::endl;
+			sum += C[i] / nodemap[edge]->size();
+		}
+		// std::cout << sum << std::endl;
+		i = imap[kv.first];
+		C_[i] = sum;
+	}
 
-	// // noramlize credit vector
-	// normalize(C_);
-	// C = C_;
+	// noramlize credit vector
+	normalize(C_);
+	C = C_;
 }
 
 int main( int argc , char** argv ) {
@@ -216,9 +183,9 @@ int main( int argc , char** argv ) {
 	// std::cout << "nodemap contains:" << std::endl;
 	// for (auto& kv: nodemap) {
 	// 	std::cout << kv.first << ": ";
-	// 	EdgeSet es = kv.second;
-	// 	std::cout << "index=" << imap[kv.first] << " size=" << es.size() << std::endl;
-	// 	for (auto& edge: es) {
+	// 	EdgeSet *es = kv.second;
+	// 	std::cout << "index=" << imap[kv.first] << " size=" << es->size() << std::endl;
+	// 	for (auto& edge: (*es)) {
 	// 		std::cout << edge << " ";
 	// 	}
 	// 	std::cout << std::endl;
