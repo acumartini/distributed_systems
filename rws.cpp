@@ -24,7 +24,7 @@
 #include <ctype.h>
 
 typedef std::unordered_set<int> EdgeSet;
-typedef std::unordered_map<int, EdgeSet> NodeMap;
+typedef std::unordered_map<int, EdgeSet*> NodeMap;
 typedef std::unordered_map<int, int> IndexMap;
 typedef std::pair<int, int> NodePair;
 typedef std::vector<double> CreditVec;
@@ -95,7 +95,8 @@ void load_network(std::string filename) {
 	std::ifstream infile(filename);
 	NodePair nodes;
 	std::vector<int>::size_type sz;
-	EdgeSet edges;
+	NodeMap::const_iterator got;
+	EdgeSet *edges;
 	int line_count = -1;
 
 	if (infile) {
@@ -104,45 +105,41 @@ void load_network(std::string filename) {
 			std::cout << "line#" << ++line_count << " : " << line <<std::endl; 
 
 			// split the line into tokens to get the kv pair
-    		std::istringstream buf(line);
-		    std::istream_iterator<std::string> beg(buf), end;
-		    std::vector<std::string> tokens(beg, end); // tokenized!
+    		// std::istringstream buf(line);
+		    // std::istream_iterator<std::string> beg(buf), end;
+		    // std::vector<std::string> tokens(beg, end); // tokenized!
 		    // boost::split(tokens, line, boost::is_any_of(' '));
 
 		    // validate token input size and update nodemap
-		    sz = tokens.size();
-		    // if (get_nodes(line, nodes) != -1) {
+		    if (get_nodes(line, nodes) != -1) {
 				// convert key to integer
-				// int source = nodes.first;
-				// int target = nodes.second;
-		    if (sz == 2) {
-				int source = stoi(tokens[0]);
-				int target = stoi(tokens[1]);
+				int source = nodes.first;
+				int target = nodes.second;
+		    // sz = tokens.size();
+		  //   if (sz == 2) {
+				// int source = stoi(tokens[0]);
+				// int target = stoi(tokens[1]);
 
 				// verify valid edge
 				if (source != target) {
-					// check if source node is new and update imap
-					// if (imap.count(source) == 0) {
-					// 	std::cout << "New node: " << source << '\n';
-					// 	++node_count;
-					// 	imap[source] = node_count;
-					// }
-
-					// // check if target node is new and update imap
-					// if (imap.count(target) == 0) {
-					// 	std::cout << "New node: " << target << '\n';
-					// 	++node_count;
-					// 	imap[target] = node_count;
-					// }
-
 					// update nodemap with new (undirected) edge
-					edges = nodemap[source];
-					edges.insert(target);
-					nodemap[source] = edges;
+					got = nodemap.find(source);
+					if (got == nodemap.end()) { // create a new entry
+						nodemap[source] = new EdgeSet();
+						edges = nodemap[source];
+					} else {
+						edges = got->second;
+					}
+					edges->insert(target);
 
-					edges = nodemap[target];
-					edges.insert(source);
-					nodemap[target] = edges;
+					got = nodemap.find(target);
+					if (got == nodemap.end()) { // create a new entry
+						nodemap[target] = new EdgeSet();
+						edges = nodemap[target];
+					} else {
+						edges = got->second;
+					}
+					edges->insert(source);
 				}
 			} else {
 				std::cout << "Input Error: 2 tokens per line expected." << std::endl;
@@ -181,22 +178,22 @@ void compute_credit(CreditVec &C, CreditVec &C_) {
 	double sum;
 	int node, i;
 
-	for (auto& kv: nodemap) {
-		sum = 0;
-		for (auto& edge: kv.second) {
-			i = imap[edge];
-			// std::cout << "edge: " << edge << std::endl;
-			// std::cout << "credit update: " << C[i] / nodemap[edge].size() << std::endl;
-			sum += C[i] / nodemap[edge].size();
-		}
-		// std::cout << sum << std::endl;
-		i = imap[kv.first];
-		C_[i] = sum;
-	}
+	// for (auto& kv: nodemap) {
+	// 	sum = 0;
+	// 	for (auto& edge: kv.second) {
+	// 		i = imap[edge];
+	// 		// std::cout << "edge: " << edge << std::endl;
+	// 		// std::cout << "credit update: " << C[i] / nodemap[edge].size() << std::endl;
+	// 		sum += C[i] / nodemap[edge].size();
+	// 	}
+	// 	// std::cout << sum << std::endl;
+	// 	i = imap[kv.first];
+	// 	C_[i] = sum;
+	// }
 
-	// noramlize credit vector
-	normalize(C_);
-	C = C_;
+	// // noramlize credit vector
+	// normalize(C_);
+	// C = C_;
 }
 
 int main( int argc , char** argv ) {
