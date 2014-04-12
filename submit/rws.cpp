@@ -5,21 +5,14 @@
  * 4.20.14
  */
 
-#include <fstream>
 #include <string>
-#include <iostream>
-#include <algorithm>
-#include <numeric> 
-#include <iterator>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <exception>
 #include <time.h>
 #include <assert.h>
 
-#define DISTRIB_FILE distrib.dat
-#define STDEV_FILE stdev.dat
+#include "utils.h"
 
 typedef std::unordered_set<int> EdgeSet;
 typedef std::unordered_map<int, EdgeSet*> NodeMap;
@@ -142,78 +135,9 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 	}
 }
 
-/*
- * Returns a normalized copy of the given CreditVec.
- */
-CreditVec normalize(CreditVec &C) {
-	CreditVec C_ = C;
-	double sum = std::accumulate(std::begin(C_), std::end(C_), 0.0);
-	for (int i=0; i<C_.size(); ++i) {
-		C_[i] /= sum;
-	}
-
-	return C_;
-}
-
-/*
- * Returns a scaled version of the given CreditVec with values ranging between
- * new_max and new_min.
- */
-CreditVec scale(CreditVec &C, double &new_max, double &new_min) {
-	CreditVec C_ = C;
-	double min = *std::min_element(std::begin(C), std::end(C));
-	double max = *std::max_element(std::begin(C), std::end(C));
-
-	int i = 0;
-	std::for_each (std::begin(C), std::end(C), [&](const double d) {
-		C_[i] = (((d - min) / (max - min + 0.0000001)) * (new_max - new_min)) + new_min;
-		++i;
-	});
-
-	return C_;
-}
-
-/*
- * Computes the standard deviation of the values in the given CreditVec.
- */
-double compute_stdev(CreditVec &C) {
-	double sum = std::accumulate(std::begin(C), std::end(C), 0.0);
-	double m =  sum / C.size();
-
-	double accum = 0.0;
-	std::for_each (std::begin(C), std::end(C), [&](const double d) {
-		accum += (d - m) * (d - m);
-	});
-
-	return std::sqrt(accum / (C.size()-1));
-}
-
-/*
- * Saves vector of doubles as a .dat file.
- */
-void save_vector_data(std::vector<double> &data, std::string file) {
-	std::ofstream myfile;
- 	myfile.open (file);
- 	for (auto& d: data) {
- 		myfile << d << '\n';
- 	}
-  	myfile.close();
-}
-
-/*
- * Saves the distribution vectors and their standard diviations as .dat files.
- */
-void save_results(std::vector<CreditVec> &distribs, std::vector<double> &stdevs) {
-	int i = 0;
-	for (auto& cv: distribs) {
-		save_vector_data(cv, "data/distrib" + std::to_string(++i) + ".dat");
-	}
-	save_vector_data(stdevs, "data/stdev.dat");
-}
-
 
 int main ( int argc , char** argv ) {
-	std::clock_t t1,t2;
+	clock_t t1,t2;
 
 	// get cmdline args
 	std::string filename = argv[1];
@@ -224,9 +148,7 @@ int main ( int argc , char** argv ) {
 	t1=clock();
 	load_network(filename);
 	t2=clock();
-    float diff((float)t2-(float)t1);
-    float seconds = diff / CLOCKS_PER_SEC;
-    std::cout << "elapsed time: " << seconds << std::endl;
+	utils::output_elapsed_time(t1, t2);
 	
 	// compute the normalized credit after numSteps
 	std::cout << std::endl;
@@ -234,23 +156,35 @@ int main ( int argc , char** argv ) {
 	std::cout << std::endl;
 	CreditVec C(nodemap.size(), 1); // initialize credit at t=0 to 1 for each node
 	CreditVec C_(nodemap.size(), 0);
+	CreditVec Cnorm;
 	std::vector<CreditVec> distribs(num_steps);
+	std::vector<double> diff_avg(num_steps);
 	std::vector<double> stdevs(num_steps);
-	double max = 1.0, min = 0.;
+	double max = 1.0, min = -1.0;
 
 	for (int i=0; i<num_steps; ++i) {
 		std::cout << "step : " << i << std::endl;
 		credit_update(C, C_);
-		C = C_; // C(t+1) becomes C(t) for next iteration
 
-		// scale C and store distribution convergence for plotting
-		// distribs[i] = scale(C, max, min);
+		// compute and store the average squared difference between C(t-1,i) and C(t, i)
+		// diff_avg[i] = utils::compute_diff_avg(C, C_);
+
+		// normalize C and store distribution convergence for plotting
+		// Cnorm = utils::normalize(C);
+		// distribs[i] = Cnorm;
 
 		// compute stdev and store for plotting
-		// stdevs[i] = compute_stdev(C);
+		// stdevs[i] = utils::compute_stdev(Cnorm);
+
+		C = C_; // C(t+1) becomes C(t) for next iteration
 	}
 
-	// save_results(distribs, stdevs);
+	utils::save_results(distribs, diff_avg, stdevs);
+
+	// free heap memory
+	for (auto& kv: nodemap) {
+		delete kv.second;
+	}
 
 	return 0 ;
 }
