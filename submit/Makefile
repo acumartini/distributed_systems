@@ -1,13 +1,9 @@
 CC=g++
-CFLAGS=-I../__GXX_EXPERIMENTAL_CXX0X__ -O0 -g3 -Wall -c -fmessage-length=0 -std=c++0x -v -o "rws.o" "rws.cpp"
-DEPS = 
-OBJ = rws.o
 
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+rws: rws.cpp
+	$(CC) -o rws.o rws.cpp -std=c++0x 
 
-rwsmake: $(OBJ)
-	gcc -o $@ $^ $(CFLAGS)
+all: rws
 
 clean:
-	rm -f *.o 
+	rm -f rws.o
