@@ -15,9 +15,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <exception>
-
 #include <time.h>
 #include <assert.h>
+
+// #include "utils.h"
+
+#define DISTRIB_FILE distrib.dat
+#define STDEV_FILE stdev.dat
 
 typedef std::unordered_set<int> EdgeSet;
 typedef std::unordered_map<int, EdgeSet*> NodeMap;
@@ -118,6 +122,29 @@ void load_network(std::string filename) {
 }
 
 /*
+ * Computes a credit update for the next time step given the current credit values for 
+ * each node in the network.
+ * 
+ * @params: C - stores the current credit values for each node in the network
+ * 			C_ - stores the credit values for each node at time step t+1
+ */
+void credit_update (CreditVec &C, CreditVec &C_) {
+	double sum;
+	int i;
+
+	// compute credit for the next time step
+	for (auto& kv: nodemap) {
+		sum = 0;
+		for (auto& edge: (*kv.second)) {
+			i = imap[edge];
+			sum += C[i] / nodemap[edge]->size();
+		}
+		i = imap[kv.first];
+		C_[i] = sum;
+	}
+}
+
+/*
  * Returns a normalized copy of the given CreditVec.
  */
 CreditVec normalize(CreditVec &C) {
@@ -126,6 +153,24 @@ CreditVec normalize(CreditVec &C) {
 	for (int i=0; i<C_.size(); ++i) {
 		C_[i] /= sum;
 	}
+
+	return C_;
+}
+
+/*
+ * Returns a scaled version of the given CreditVec with values ranging between
+ * new_max and new_min.
+ */
+CreditVec scale(CreditVec &C, double &new_max, double &new_min) {
+	CreditVec C_ = C;
+	double min = *std::min_element(std::begin(C), std::end(C));
+	double max = *std::max_element(std::begin(C), std::end(C));
+
+	int i = 0;
+	std::for_each (std::begin(C), std::end(C), [&](const double d) {
+		C_[i] = (((d - min) / (max - min + 0.0000001)) * (new_max - new_min)) + new_min;
+		++i;
+	});
 
 	return C_;
 }
@@ -142,38 +187,39 @@ double compute_stdev(CreditVec &C) {
 		accum += (d - m) * (d - m);
 	});
 
-	return sqrt(accum / (C.size()-1));
+	return std::sqrt(accum / (C.size()-1));
 }
 
 /*
- * Computes a credit update for the next time step given the current credit values for 
- * each node in the network.
- * 
- * @params: C - stores the current credit values for each node in the network
- * 			C_ - stores the credit values for each node at time step t+1
+ * Saves vector of doubles as a .dat file.
  */
-void credit_update(CreditVec &C, CreditVec &C_) {
-	double sum;
-	int i;
-
-	// compute credit for the next time step
-	for (auto& kv: nodemap) {
-		sum = 0;
-		for (auto& edge: (*kv.second)) {
-			i = imap[edge];
-			sum += C[i] / nodemap[edge]->size();
-		}
-		i = imap[kv.first];
-		C_[i] = sum;
-	}
+void save_vector_data(std::vector<double> &data, std::string file) {
+	std::ofstream myfile;
+ 	myfile.open (file);
+ 	for (auto& d: data) {
+ 		myfile << d << '\n';
+ 	}
+  	myfile.close();
 }
 
-int main( int argc , char** argv ) {
+/*
+ * Saves the distribution vectors and their standard diviations as .dat files.
+ */
+void save_results(std::vector<CreditVec> &distribs, std::vector<double> &stdevs) {
+	int i = 0;
+	for (auto& cv: distribs) {
+		save_vector_data(cv, "data/distrib" + std::to_string(++i) + ".dat");
+	}
+	save_vector_data(stdevs, "data/stdev.dat");
+}
+
+
+int main ( int argc , char** argv ) {
 	std::clock_t t1,t2;
 
 	// get cmdline args
 	std::string filename = argv[1];
-	int numSteps = atoi(argv[2]);
+	int num_steps = atoi(argv[2]);
 
 	// initialize adjacency list vector hash
 	std::cout << "Loading network edges from " << filename << "..." << std::endl;
@@ -182,7 +228,7 @@ int main( int argc , char** argv ) {
 	t2=clock();
     float diff((float)t2-(float)t1);
     float seconds = diff / CLOCKS_PER_SEC;
-    std::cout << "time: " << seconds << std::endl;
+    std::cout << "elapsed time: " << seconds << std::endl;
 
 	// check hash
 	// std::cout << "nodemap contains:" << std::endl;
@@ -198,26 +244,27 @@ int main( int argc , char** argv ) {
 	
 	// compute the normalized credit after numSteps
 	std::cout << std::endl;
-	std::cout << "Computing the normalized credit vector after " << numSteps << " steps...";
+	std::cout << "Computing the normalized credit vector after " << num_steps << " steps...";
 	std::cout << std::endl;
 	CreditVec C(nodemap.size(), 1); // initialize credit at t=0 to 1 for each node
 	CreditVec C_(nodemap.size(), 0);
+	std::vector<CreditVec> distribs(num_steps);
+	std::vector<double> stdevs(num_steps);
+	double max = 1.0, min = 0.;
 
-	for (int i=0; i<numSteps; ++i) {
+	for (int i=0; i<num_steps; ++i) {
 		std::cout << "step : " << i << std::endl;
 		credit_update(C, C_);
 		C = C_; // C(t+1) becomes C(t) for next iteration
 
-		// noramlize C and test for distribution convergence using stdev
-		// CreditVec normC;
-		// double stdev;
-		// normC = normalize(C);
-		// stdev = compute_stdev(normC);
-		// std::cout << "stdev: " << stdev << std::endl;
-		// for (int j=0; j<numSteps; ++j) {
-		// 	std::cout << j << " : " << C[j] << std::endl;
-		// }
+		// scale C and store distribution convergence for plotting
+		distribs[i] = scale(C, max, min);
+
+		// compute stdev and store for plotting
+		stdevs[i] = compute_stdev(C);
 	}
+
+	save_results(distribs, stdevs);
 
 	return 0 ;
 }
