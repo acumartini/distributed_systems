@@ -25,6 +25,9 @@ NodeMap nodemap;
 IndexMap imap;
 
 
+/*
+ * Parse a line of network data input (an edge) into a source/target node integer pair.
+ */
 int get_nodes(const std::string &line, NodePair &nodes) {
 	std::string source, target;
 	int i = 0, j = 0;
