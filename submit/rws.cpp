@@ -58,7 +58,7 @@ int get_nodes(const std::string &line, NodePair &nodes) {
 }
 
 /*
- * Reads the network from the given file into the global adjecency list unordered map.
+ * Reads the network from the given file into the global adjacency list unordered map.
  */
 void load_network(std::string filename) {
 	std::string line;
@@ -166,7 +166,7 @@ int main ( int argc , char** argv ) {
 	double max = 1.0, min = -1.0;
 
 	for (int i=0; i<num_steps; ++i) {
-		std::cout << "step : " << i << std::endl;
+		std::cout << "step : " << i + 1 << std::endl;
 		credit_update(C, C_);
 
 		// compute and store the average squared difference between C(t-1,i) and C(t, i)

@@ -12,7 +12,7 @@ typedef std::vector<double> CreditVec;
 namespace utils {
 
 /*
- * Ouputs the time elapsed between t1 and t2 in seconds to standard output.
+ * Outputs the time elapsed between t1 and t2 in seconds to standard output.
  */
 
 void output_elapsed_time(clock_t t1, clock_t t2) {
@@ -92,7 +92,7 @@ void save_vector_data(std::vector<double> &data, std::string file) {
 }
 
 /*
- * Saves the distribution vectors and their standard diviations as .dat files.
+ * Saves the distribution vectors and their standard deviations as .dat files.
  */
 void save_results(std::vector<CreditVec> &distribs, std::vector<double> &diff_avg, std::vector<double> &stdevs) {
 	int i = 0;
