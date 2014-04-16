@@ -9,6 +9,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <stdio.h>
 #include <time.h>
 #include <assert.h>
 
@@ -147,16 +148,14 @@ int main ( int argc , char** argv ) {
 	int num_steps = atoi(argv[2]);
 
 	// initialize adjacency list vector hash
-	std::cout << "Loading network edges from " << filename << "..." << std::endl;
+	printf("Loading network edges from %s...\n", filename.c_str());
 	t1=clock();
 	load_network(filename);
 	t2=clock();
 	utils::output_elapsed_time(t1, t2);
 	
 	// compute the normalized credit after numSteps
-	std::cout << std::endl;
-	std::cout << "Computing the normalized credit vector after " << num_steps << " steps...";
-	std::cout << std::endl;
+	printf("\nComputing the normalized credit vector after %d steps...\n", num_steps);
 	CreditVec C(nodemap.size(), 1); // initialize credit at t=0 to 1 for each node
 	CreditVec C_(nodemap.size(), 0);
 	CreditVec Cnorm;
@@ -166,7 +165,7 @@ int main ( int argc , char** argv ) {
 	double max = 1.0, min = -1.0;
 
 	for (int i=0; i<num_steps; ++i) {
-		std::cout << "step : " << i + 1 << std::endl;
+		printf("step : %d\n", i);
 		credit_update(C, C_);
 
 		// compute and store the average squared difference between C(t-1,i) and C(t, i)
