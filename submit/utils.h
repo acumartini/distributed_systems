@@ -22,7 +22,7 @@ typedef std::vector<double> CreditVec;
 
 namespace utils {
 
-	void output_elapsed_time(clock_t t1, clock_t t2);
+	float elapsed_time(clock_t t1, clock_t t2);
 
 	CreditVec normalize(CreditVec &C);
 

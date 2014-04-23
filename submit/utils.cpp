@@ -15,10 +15,9 @@ namespace utils {
  * Outputs the time elapsed between t1 and t2 in seconds to standard output.
  */
 
-void output_elapsed_time(clock_t t1, clock_t t2) {
+float elapsed_time(clock_t t1, clock_t t2) {
     float diff((float)t2-(float)t1);
-    float seconds = diff / CLOCKS_PER_SEC;
-    std::cout << "elapsed time: " << seconds << std::endl;
+    return diff / CLOCKS_PER_SEC;
 }
 
 /*
