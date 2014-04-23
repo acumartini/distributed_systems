@@ -15,10 +15,10 @@
 
 #include "utils.h"
 
-typedef std::unordered_set<int> EdgeSet;
-typedef std::unordered_map<int, EdgeSet*> NodeMap;
-typedef std::unordered_map<int, int> IndexMap;
-typedef std::pair<int, int> NodePair;
+typedef std::unordered_set<long> EdgeSet;
+typedef std::unordered_map<long, EdgeSet*> NodeMap;
+typedef std::unordered_map<long, long> IndexMap;
+typedef std::pair<long, long> NodePair;
 typedef std::vector<double> CreditVec;
 
 // global network storage
@@ -66,7 +66,7 @@ void load_network(std::string filename) {
 	NodePair nodes;
 	NodeMap::const_iterator got;
 	EdgeSet *edges;
-	int line_count = -1, output_mod = 100000;
+	long line_count = -1, output_mod = 1000000;
 
 	// load file and iterate through each line of input
 	std::ifstream infile(filename);
@@ -74,13 +74,13 @@ void load_network(std::string filename) {
 		while (getline(infile, line, '\n')) {
 			// output line_count every output_mod lines
 			++line_count;
-			if (line_count % output_mod == 0)
-				std::cout << "line#" << line_count << std::endl;
+			if (line_count != 0 && line_count % output_mod == 0)
+				printf( "line#%ld\n", line_count );
 
 		    // convert key to integer and update nodemap with valid input
 		    if (get_nodes(line, nodes) != -1) {
-				int source = nodes.first;
-				int target = nodes.second;
+				long source = nodes.first;
+				long target = nodes.second;
 
 				// verify valid edge
 				if (source != target) {
@@ -108,7 +108,7 @@ void load_network(std::string filename) {
 			}
    		}
    		// populate imap
-   		int i = -1;
+   		long i = -1;
    		for (auto& kv: nodemap) {
    			imap[kv.first] = ++i;
    		}
@@ -125,7 +125,7 @@ void load_network(std::string filename) {
  */
 void credit_update (CreditVec &C, CreditVec &C_) {
 	double sum;
-	int i;
+	long i;
 
 	// compute credit for the next time step
 	for (auto& kv: nodemap) {
@@ -148,14 +148,14 @@ int main ( int argc , char** argv ) {
 	int num_steps = atoi(argv[2]);
 
 	// initialize adjacency list vector hash
-	printf("Loading network edges from %s...\n", filename.c_str());
+	printf("Loading network edges from %s\n", filename.c_str());
 	t1=clock();
 	load_network(filename);
 	t2=clock();
 	utils::output_elapsed_time(t1, t2);
 	
 	// compute the normalized credit after numSteps
-	printf("\nComputing the normalized credit vector after %d steps...\n", num_steps);
+	printf("\nComputing the Credit Values for %d Steps:\n", num_steps);
 	CreditVec C(nodemap.size(), 1); // initialize credit at t=0 to 1 for each node
 	CreditVec C_(nodemap.size(), 0);
 	CreditVec Cnorm;
@@ -164,8 +164,9 @@ int main ( int argc , char** argv ) {
 	std::vector<double> stdevs(num_steps);
 	double max = 1.0, min = -1.0;
 
+	t1=clock();
 	for (int i=0; i<num_steps; ++i) {
-		printf("step : %d\n", i);
+		printf("step : %d\n", i+1);
 		credit_update(C, C_);
 
 		// compute and store the average squared difference between C(t-1,i) and C(t, i)
@@ -179,6 +180,14 @@ int main ( int argc , char** argv ) {
 		// stdevs[i] = utils::compute_stdev(Cnorm);
 
 		C = C_; // C(t+1) becomes C(t) for next iteration
+	}
+	t2=clock();
+	utils::output_elapsed_time(t1, t2);
+
+	// output credit value results after the final step
+	printf( "\nCredit Values After the Final Step:\n" );
+	for ( long n=0; n<C.size(); ++n ) {
+		printf( "%ld\t%lu\t%f\t\n", n, nodemap[n] ? nodemap[n]->size() : 0, C[ imap[n] ] );
 	}
 
 	utils::save_results(distribs, diff_avg, stdevs);

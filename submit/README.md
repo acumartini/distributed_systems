@@ -18,3 +18,6 @@ The program will load the network data and then perform the given number of step
 to simulate a many random walk.  There are data ouput options for each step that are commented out
 (lines 169-177) for efficiency.  To create and store distribution metrics, uncomment these lines and
 create a "data" directory local to your executable.
+
+After all credit update steps are complete, the program outputs the final credit values for for each node
+alogn with its degree.  The output is similar to the test output on the project discription page.
