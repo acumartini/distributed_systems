@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <stdio.h>
 #include <time.h>
@@ -17,7 +18,7 @@
 
 typedef unsigned long GraphSize;
 typedef std::unordered_set<GraphSize> EdgeSet;
-typedef std::unordered_map<GraphSize, EdgeSet*> NodeMap;
+typedef std::map<GraphSize, EdgeSet*> NodeMap;
 typedef std::vector<GraphSize> KeyList;
 typedef std::unordered_map<GraphSize, GraphSize> IndexMap;
 typedef std::pair<GraphSize, GraphSize> NodePair;
@@ -153,11 +154,13 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 void write_output ( std::string filename, std::vector<CreditVec> updates ) {
 	FILE * pfile = fopen ( filename.c_str(), "w" );
 
-	for ( GraphSize n=1; n<updates[0].size()+1; ++n ) {
-		fprintf( pfile, "%lu\t%lu", n, nodemap[n] ? nodemap[n]->size() : 0 );
+	for ( auto& kv : nodemap ) {
+		GraphSize node = kv.first;
+		EdgeSet *edges = kv.second;
+		fprintf( pfile, "%lu\t%lu", node, edges ? edges->size() : 0 );
 		// output update values for node n
 		for (int i=0; i<updates.size(); ++i) {
-			fprintf( pfile, "\t%.6lf", updates[i][imap[n]] );
+			fprintf( pfile, "\t%.6lf", updates[i][imap[node]] );
 		}
 		fprintf( pfile, "\n" );
 	}
