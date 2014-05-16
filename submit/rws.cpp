@@ -61,17 +61,10 @@ void load_network(std::string filename) {
 	Node *node, *srcnode, *tarnode;
 	NodeMap::const_iterator got;
 
-	// GraphSize line_count = 0, output_mod = 1000000;
-
 	// load file and iterate through each line of input
 	std::ifstream infile(filename);
 	if (infile) {
 		while (getline(infile, line, '\n')) {
-			// output line_count every output_mod lines
-			// if (line_count != 0 && line_count % output_mod == 0)
-			// 	printf( "line#%lu\n", line_count );
-			// line_count++;
-
 		    // convert key to integer and update nodemap with valid input
 		    if ( get_nodes(line, nodes) != -1 ) {
 				GraphSize source = nodes.first;

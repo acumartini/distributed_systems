@@ -1,7 +1,7 @@
 /*
  * node.h
  *
- *  Created on: Apr 12, 2014
+ *  Created on: 5-16-2014
  *      Author: martini
  */
 
@@ -31,13 +31,6 @@ public:
 	void setIndex ( const GraphSize& index ) { node_index = index; }
   	void addEdge ( Node *node ) { edge_set.insert( node ); }
 
-  	void printEdges() {
-		printf( "node %ld with edgeCount %ld\n", node_id, edgeCount() );
-		for ( auto& node : edge_set ){
-			printf ( "\t%ld\n", node->id() );
-		}
-	}
-
 private:
 	GraphSize node_id;
 	GraphSize node_index;
@@ -45,10 +38,8 @@ private:
 };
 
 // Node comparator for sorting
-struct nodecomp
-{
-     bool operator() ( Node* n1, Node* n2 )
-    {
+struct nodecomp {
+	bool operator() ( Node* n1, Node* n2 ) {
         return ( n1->id() < n2->id() );
     }
 };
