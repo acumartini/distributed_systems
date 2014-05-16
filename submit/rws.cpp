@@ -109,10 +109,11 @@ void load_network(std::string filename) {
 			}
    		}
    		// populate node vector and add indices
+   		nodevec.resize( nodemap.size() );
    		GraphSize i = 0;
    		for ( auto& kv: nodemap ) {
    			node = kv.second;
-   			nodevec.push_back( node );
+   			nodevec[i] = node;
    			node->setIndex( i++ );
    		}
 	}
@@ -139,7 +140,7 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 		sum = 0;
 		for ( auto& tarnode: node->getEdges() ) {
 			i = tarnode->index();
-			sum += C[i] / nodevec[i]->edgeCount();
+			sum += C[i] / tarnode->edgeCount();
 		}
 		i = node->index();
 		C_[i] = sum;
