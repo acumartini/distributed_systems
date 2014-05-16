@@ -134,7 +134,7 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 	Node *node;
 
 	// compute credit for the next time step
-	// #pragma omp parallel for private( sum, i, node ) shared( C, C_ )
+	#pragma omp parallel for private( sum, i, node ) shared( C, C_ )
 	for ( int j = 0; j < nodevec.size(); ++j ) {
 		node = nodevec[j];
 		sum = 0;
