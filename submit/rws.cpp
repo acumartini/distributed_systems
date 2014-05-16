@@ -6,6 +6,7 @@
  */
 
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <unordered_map>
 #include <map>
@@ -19,27 +20,50 @@
 typedef unsigned long GraphSize;
 
 class Node {
+
+	//bool nodeEquals ( Node* n1, Node* n2 ) { return n1->id() == n2->id(); }
+	typedef std::unordered_set<Node*> EdgeSet;
+	//typedef std::vector<Node*> EdgeVec;
+
 public:
 	Node ( const GraphSize& id ): node_id( id ) {}
 	~Node () {}
 
-	const std::unordered_set<Node*>& edges () const { return edges; }
+	const EdgeSet& getEdges() const { return edge_set; }
+	//const EdgeVec& getEdges() const { return edge_vec; }
+	GraphSize edgeCount () { return edge_set.size(); }
+
 	const GraphSize& id () const { return node_id; }
-	const GraphSize& index () const { return index; }
-	void setIndex ( const GraphSize& ind ) { index = ind; }
+	const GraphSize& index () const { return node_index; }
+
+	void setIndex ( const GraphSize& index ) { node_index = index; }
+  	void addEdge ( Node *node ) {
+  		// if ( edge_set.find( node->id() ) == edge_set.end() ) {
+  		// 	edge_vec.push_back( node ); 
+  		// }
+  		edge_set.insert( node );
+  	}
+
+  	void printEdges() {
+		printf( "node %ld with edgeCount %ld\n", node_id, edgeCount() );
+		for ( auto& node : edge_set ){
+			printf ( "\t%ld\n", node->id() );
+		}
+	}
 
 private:
 	GraphSize node_id;
-	GraphSize index;
-	std::unordered_set<Node*> edges;
+	GraphSize node_index;
+	EdgeSet edge_set;
+	//EdgeVec edge_vec;
 };
 
 // Node comparator
 struct nodecomp
 {
-     bool operator() (const Node& n1, const Node& n2)
+     bool operator() ( Node* n1, Node* n2 )
     {
-        return ( n1.id() < n2.id() );
+        return ( n1->id() < n2->id() );
     }
 };
 
@@ -52,8 +76,8 @@ typedef std::vector<double> CreditVec;
 
 // global network storage
 NodeVec nodevec;
-KeyList keys;
-IndexMap imap;
+//KeyList keys;
+//IndexMap imap;
 
 
 /*
@@ -96,23 +120,24 @@ void load_network(std::string filename) {
 	NodeMap nodemap;
 	NodePair nodes;
 	Node *node, *srcnode, *tarnode;
-	NodeVec::const_iterator got;
+	NodeMap::const_iterator got;
 
-	// GraphSize line_count = 0, output_mod = 1000000;
+	GraphSize line_count = 0, output_mod = 1000000;
 
 	// load file and iterate through each line of input
 	std::ifstream infile(filename);
 	if (infile) {
 		while (getline(infile, line, '\n')) {
 			// output line_count every output_mod lines
-			// if (line_count != 0 && line_count % output_mod == 0)
-			// 	printf( "line#%lu\n", line_count );
-			// line_count++;
+			if (line_count != 0 && line_count % output_mod == 0)
+				printf( "line#%lu\n", line_count );
+			line_count++;
 
 		    // convert key to integer and update nodemap with valid input
 		    if ( get_nodes(line, nodes) != -1 ) {
 				GraphSize source = nodes.first;
 				GraphSize target = nodes.second;
+				// printf("node pair %ld\t%ld\n", source, target);
 
 				// verify valid edge
 				if (source != target) {
@@ -126,16 +151,24 @@ void load_network(std::string filename) {
 					}
 
 					// get target node
+					got = nodemap.find( target );
 					if ( got == nodemap.end() ) { // create a new entry
 						tarnode = new Node( target );
 						nodemap[target] = tarnode;
 					} else {
 						tarnode = got->second;
 					}
+					// printf("got source = %ld\n", srcnode->id() );
+					// printf("got target = %ld\n", tarnode->id() );
 
 					// update nodes with new (undirected) edge
-					srcnode->edges().insert( tarnode );
-					tarnode->edges().insert( srcnode );
+					srcnode->addEdge( tarnode );
+					tarnode->addEdge( srcnode );
+
+					// printf("source id %ld edges:\n", srcnode->id() );
+					// for (auto& n : srcnode->getEdges() ) {
+					// 	printf( "\t%ld\n", n->id() );
+					// }
 				}
 			} else {
 				std::cout << "Input Error: 2 tokens per line expected." << std::endl;
@@ -143,7 +176,6 @@ void load_network(std::string filename) {
    		}
    		// populate node vector and add indices
    		GraphSize i = 0;
-   		
    		for ( auto& kv: nodemap ) {
    			node = kv.second;
    			nodevec.push_back( node );
@@ -164,16 +196,16 @@ void load_network(std::string filename) {
 void credit_update (CreditVec &C, CreditVec &C_) {
 	double sum;
 	GraphSize i;
+	Node *node;
 
 	// compute credit for the next time step
-	#pragma omp parallel for private( sum i ) shared( C, C_ )
+	#pragma omp parallel for private( sum, i, node ) shared( C, C_ )
 	for ( int j = 0; j < nodevec.size(); ++j ) {
-		Node *node = nodevec[j];
-		EdgeSet *edges = node->edges();
+		node = nodevec[j];
 		sum = 0;
-		for (auto& tarnode: *edges) {
+		for ( auto& tarnode: node->getEdges() ) {
 			i = tarnode->index();
-			sum += C[i] / nodevec[i]->size();
+			sum += C[i] / nodevec[i]->edgeCount();
 		}
 		i = node->index();
 		C_[i] = sum;
@@ -191,11 +223,10 @@ void write_output ( std::string filename, std::vector<CreditVec> updates ) {
    	std::sort( nodevec.begin(), nodevec.end(), nodecomp() );
 
 	for ( auto& node : nodevec ) {
-		EdgeSet *edges = node->edges();
-		fprintf( pfile, "%lu\t%lu", node.id(), edges ? edges->size() : 0 );
+		fprintf( pfile, "%lu\t%lu", node->id(), node->edgeCount() );
 		// output update values for node n
-		for (int i=0; i<updates.size(); ++i) {
-			fprintf( pfile, "\t%.6lf", updates[i][node.index()] );
+		for ( int i = 0; i < updates.size(); ++i ) {
+			fprintf( pfile, "\t%.6lf", updates[i][node->index()] );
 		}
 		fprintf( pfile, "\n" );
 	}
@@ -218,11 +249,15 @@ int main ( int argc , char** argv ) {
 	load_network(input_file);
 	t2=clock();
 	printf( "Time to read input file = %f seconds\n", utils::elapsed_time(t1, t2) );
+
+	// for ( auto& node : nodevec ) {
+	// 	node->printEdges();
+	// }
 	
 	// compute the normalized credit after numSteps
 	printf("\nComputing the Credit Values for %d Rounds:\n", num_steps);
-	CreditVec C(nodemap.size(), 1); // initialize credit at t=0 to 1 for each node
-	CreditVec C_(nodemap.size(), 0);
+	CreditVec C(nodevec.size(), 1); // initialize credit at t=0 to 1 for each node
+	CreditVec C_(nodevec.size(), 0);
 	CreditVec Cnorm;
 	std::vector<CreditVec> distribs(num_steps);
 	std::vector<CreditVec> updates(num_steps);
@@ -262,8 +297,8 @@ int main ( int argc , char** argv ) {
 	utils::save_results(distribs, diff_avg, stdevs);
 
 	// free heap memory
-	for (auto& kv: nodemap) {
-		delete kv.second;
+	for ( auto& node: nodevec ) {
+		delete node;
 	}
 
 	return 0 ;
