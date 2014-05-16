@@ -16,68 +16,11 @@
 #include <assert.h>
 
 #include "utils.h"
+#include "node.h"
 
-typedef unsigned long GraphSize;
-
-class Node {
-
-	//bool nodeEquals ( Node* n1, Node* n2 ) { return n1->id() == n2->id(); }
-	typedef std::unordered_set<Node*> EdgeSet;
-	//typedef std::vector<Node*> EdgeVec;
-
-public:
-	Node ( const GraphSize& id ): node_id( id ) {}
-	~Node () {}
-
-	const EdgeSet& getEdges() const { return edge_set; }
-	//const EdgeVec& getEdges() const { return edge_vec; }
-	GraphSize edgeCount () { return edge_set.size(); }
-
-	const GraphSize& id () const { return node_id; }
-	const GraphSize& index () const { return node_index; }
-
-	void setIndex ( const GraphSize& index ) { node_index = index; }
-  	void addEdge ( Node *node ) {
-  		// if ( edge_set.find( node->id() ) == edge_set.end() ) {
-  		// 	edge_vec.push_back( node ); 
-  		// }
-  		edge_set.insert( node );
-  	}
-
-  	void printEdges() {
-		printf( "node %ld with edgeCount %ld\n", node_id, edgeCount() );
-		for ( auto& node : edge_set ){
-			printf ( "\t%ld\n", node->id() );
-		}
-	}
-
-private:
-	GraphSize node_id;
-	GraphSize node_index;
-	EdgeSet edge_set;
-	//EdgeVec edge_vec;
-};
-
-// Node comparator
-struct nodecomp
-{
-     bool operator() ( Node* n1, Node* n2 )
-    {
-        return ( n1->id() < n2->id() );
-    }
-};
-
-typedef std::vector<Node*> NodeVec;
-typedef std::unordered_map<GraphSize, Node*> NodeMap;
-//typedef std::vector<GraphSize> KeyList;
-//typedef std::unordered_map<GraphSize, GraphSize> IndexMap;
-typedef std::pair<GraphSize, GraphSize> NodePair;
-typedef std::vector<double> CreditVec;
 
 // global network storage
 NodeVec nodevec;
-//KeyList keys;
-//IndexMap imap;
 
 
 /*
@@ -122,22 +65,21 @@ void load_network(std::string filename) {
 	Node *node, *srcnode, *tarnode;
 	NodeMap::const_iterator got;
 
-	GraphSize line_count = 0, output_mod = 1000000;
+	// GraphSize line_count = 0, output_mod = 1000000;
 
 	// load file and iterate through each line of input
 	std::ifstream infile(filename);
 	if (infile) {
 		while (getline(infile, line, '\n')) {
 			// output line_count every output_mod lines
-			if (line_count != 0 && line_count % output_mod == 0)
-				printf( "line#%lu\n", line_count );
-			line_count++;
+			// if (line_count != 0 && line_count % output_mod == 0)
+			// 	printf( "line#%lu\n", line_count );
+			// line_count++;
 
 		    // convert key to integer and update nodemap with valid input
 		    if ( get_nodes(line, nodes) != -1 ) {
 				GraphSize source = nodes.first;
 				GraphSize target = nodes.second;
-				// printf("node pair %ld\t%ld\n", source, target);
 
 				// verify valid edge
 				if (source != target) {
@@ -158,17 +100,10 @@ void load_network(std::string filename) {
 					} else {
 						tarnode = got->second;
 					}
-					// printf("got source = %ld\n", srcnode->id() );
-					// printf("got target = %ld\n", tarnode->id() );
 
 					// update nodes with new (undirected) edge
 					srcnode->addEdge( tarnode );
 					tarnode->addEdge( srcnode );
-
-					// printf("source id %ld edges:\n", srcnode->id() );
-					// for (auto& n : srcnode->getEdges() ) {
-					// 	printf( "\t%ld\n", n->id() );
-					// }
 				}
 			} else {
 				std::cout << "Input Error: 2 tokens per line expected." << std::endl;
@@ -199,7 +134,7 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 	Node *node;
 
 	// compute credit for the next time step
-	#pragma omp parallel for private( sum, i, node ) shared( C, C_ )
+	// #pragma omp parallel for private( sum, i, node ) shared( C, C_ )
 	for ( int j = 0; j < nodevec.size(); ++j ) {
 		node = nodevec[j];
 		sum = 0;
@@ -217,7 +152,6 @@ void credit_update (CreditVec &C, CreditVec &C_) {
  */
 void write_output ( std::string filename, std::vector<CreditVec> updates ) {
 	FILE * pfile = fopen ( filename.c_str(), "w" );
-	//std::map<GraphSize, EdgeSet*> sorted_nodemap( nodemap.begin(), nodemap.end() );
 	
 	// sort nodevec by id
    	std::sort( nodevec.begin(), nodevec.end(), nodecomp() );
@@ -249,10 +183,6 @@ int main ( int argc , char** argv ) {
 	load_network(input_file);
 	t2=clock();
 	printf( "Time to read input file = %f seconds\n", utils::elapsed_time(t1, t2) );
-
-	// for ( auto& node : nodevec ) {
-	// 	node->printEdges();
-	// }
 	
 	// compute the normalized credit after numSteps
 	printf("\nComputing the Credit Values for %d Rounds:\n", num_steps);
