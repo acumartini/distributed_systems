@@ -7,13 +7,10 @@
 
 #include <string>
 #include <algorithm>
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <stdio.h>
-#include <time.h>
 #include <assert.h>
 
+#include "omp.h"
 #include "utils.h"
 #include "node.h"
 
@@ -170,7 +167,7 @@ void write_output ( std::string filename, std::vector<CreditVec> updates ) {
 
 
 int main ( int argc , char** argv ) {
-	clock_t t1,t2;
+	double start, end, runtime;
 
 	// get cmdline args
 	std::string input_file = argv[1];
@@ -179,10 +176,10 @@ int main ( int argc , char** argv ) {
 
 	// initialize adjacency list vector hash
 	printf("Loading network edges from %s\n", input_file.c_str());
-	t1=clock();
+	start = omp_get_wtime();
 	load_network(input_file);
-	t2=clock();
-	printf( "Time to read input file = %f seconds\n", utils::elapsed_time(t1, t2) );
+	end = omp_get_wtime();
+	printf( "Time to read input file = %lf seconds\n", start - end );
 	
 	// compute the normalized credit after numSteps
 	printf("\nComputing the Credit Values for %d Rounds:\n", num_steps);
@@ -198,10 +195,10 @@ int main ( int argc , char** argv ) {
 	for (int i=0; i<num_steps; ++i) {
 		printf("round %d = ", i+1);
 
-		t1=clock();
+		start = omp_get_wtime();
 		credit_update(C, C_);
-		t2=clock();
-		printf( "%f seconds\n", utils::elapsed_time(t1, t2) );
+		end = omp_get_wtime();
+		printf( "%f seconds\n", start - end );
 
 		// compute and store the average squared difference between C(t-1,i) and C(t, i)
 		// diff_avg[i] = utils::compute_diff_avg(C, C_);

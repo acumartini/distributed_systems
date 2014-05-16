@@ -8,14 +8,9 @@
 #ifndef NODE_H_
 #define NODE_H_
 
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-#include <numeric>
-#include <iterator>
 #include <vector>
-#include <cmath>
-#include <time.h>
+#include <unordered_map>
+#include <unordered_set>
 
 
 typedef unsigned long GraphSize;
