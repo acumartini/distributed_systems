@@ -18,7 +18,7 @@
 
 typedef unsigned long GraphSize;
 typedef std::unordered_set<GraphSize> EdgeSet;
-typedef std::map<GraphSize, EdgeSet*> NodeMap;
+typedef std::unordered_map<GraphSize, EdgeSet*> NodeMap;
 typedef std::vector<GraphSize> KeyList;
 typedef std::unordered_map<GraphSize, GraphSize> IndexMap;
 typedef std::pair<GraphSize, GraphSize> NodePair;
@@ -153,8 +153,9 @@ void credit_update (CreditVec &C, CreditVec &C_) {
  */
 void write_output ( std::string filename, std::vector<CreditVec> updates ) {
 	FILE * pfile = fopen ( filename.c_str(), "w" );
+	std::map<GraphSize, EdgeSet*> sorted_nodemap( nodemap.begin(), nodemap.end() );
 
-	for ( auto& kv : nodemap ) {
+	for ( auto& kv : sorted_nodemap ) {
 		GraphSize node = kv.first;
 		EdgeSet *edges = kv.second;
 		fprintf( pfile, "%lu\t%lu", node, edges ? edges->size() : 0 );
