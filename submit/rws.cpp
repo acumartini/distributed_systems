@@ -17,15 +17,41 @@
 #include "utils.h"
 
 typedef unsigned long GraphSize;
-typedef std::unordered_set<GraphSize> EdgeSet;
-typedef std::unordered_map<GraphSize, EdgeSet*> NodeMap;
-typedef std::vector<GraphSize> KeyList;
-typedef std::unordered_map<GraphSize, GraphSize> IndexMap;
+
+class Node {
+public:
+	Node ( const GraphSize& id ): node_id( id ) {}
+	~Node () {}
+
+	const std::unordered_set<Node*>& edges () const { return edges; }
+	const GraphSize& id () const { return node_id; }
+	const GraphSize& index () const { return index; }
+	void setIndex ( const GraphSize& ind ) { index = ind; }
+
+private:
+	GraphSize node_id;
+	GraphSize index;
+	std::unordered_set<Node*> edges;
+};
+
+// Node comparator
+struct nodecomp
+{
+     bool operator() (const Node& n1, const Node& n2)
+    {
+        return ( n1.id() < n2.id() );
+    }
+};
+
+typedef std::vector<Node*> NodeVec;
+typedef std::unordered_map<GraphSize, Node*> NodeMap;
+//typedef std::vector<GraphSize> KeyList;
+//typedef std::unordered_map<GraphSize, GraphSize> IndexMap;
 typedef std::pair<GraphSize, GraphSize> NodePair;
 typedef std::vector<double> CreditVec;
 
 // global network storage
-NodeMap nodemap;
+NodeVec nodevec;
 KeyList keys;
 IndexMap imap;
 
@@ -67,9 +93,11 @@ int get_nodes(const std::string &line, NodePair &nodes) {
  */
 void load_network(std::string filename) {
 	std::string line;
+	NodeMap nodemap;
 	NodePair nodes;
-	NodeMap::const_iterator got;
-	EdgeSet *edges;
+	Node *node, *srcnode, *tarnode;
+	NodeVec::const_iterator got;
+
 	// GraphSize line_count = 0, output_mod = 1000000;
 
 	// load file and iterate through each line of input
@@ -82,41 +110,44 @@ void load_network(std::string filename) {
 			// line_count++;
 
 		    // convert key to integer and update nodemap with valid input
-		    if (get_nodes(line, nodes) != -1) {
+		    if ( get_nodes(line, nodes) != -1 ) {
 				GraphSize source = nodes.first;
 				GraphSize target = nodes.second;
 
 				// verify valid edge
 				if (source != target) {
-					// update nodemap with new (undirected) edge
-					got = nodemap.find(source);
-					if (got == nodemap.end()) { // create a new entry
-						nodemap[source] = new EdgeSet();
-						edges = nodemap[source];
+					// get source node
+					got = nodemap.find( source );
+					if ( got == nodemap.end() ) { // create a new source node
+						srcnode = new Node( source );
+						nodemap[source] = srcnode;
 					} else {
-						edges = got->second;
+						srcnode = got->second;
 					}
-					edges->insert(target);
 
-					got = nodemap.find(target);
-					if (got == nodemap.end()) { // create a new entry
-						nodemap[target] = new EdgeSet();
-						edges = nodemap[target];
+					// get target node
+					if ( got == nodemap.end() ) { // create a new entry
+						tarnode = new Node( target );
+						nodemap[target] = tarnode;
 					} else {
-						edges = got->second;
+						tarnode = got->second;
 					}
-					edges->insert(source);
+
+					// update nodes with new (undirected) edge
+					srcnode->edges().insert( tarnode );
+					tarnode->edges().insert( srcnode );
 				}
 			} else {
 				std::cout << "Input Error: 2 tokens per line expected." << std::endl;
 			}
    		}
-   		// populate keylist and imap
-   		keys.reserve( nodemap.size() );
+   		// populate node vector and add indices
    		GraphSize i = 0;
-   		for (auto& kv: nodemap) {
-   			keys.push_back( kv.first );
-   			imap[kv.first] = i++;
+   		
+   		for ( auto& kv: nodemap ) {
+   			node = kv.second;
+   			nodevec.push_back( node );
+   			node->setIndex( i++ );
    		}
 	}
 	infile.close( );
@@ -135,15 +166,16 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 	GraphSize i;
 
 	// compute credit for the next time step
-	#pragma omp parallel for private( i, sum ) shared( C, C_ )
-	for (int j=0; j<keys.size(); ++j ) {
-		EdgeSet *edges = nodemap[keys[j]];
+	#pragma omp parallel for private( sum i ) shared( C, C_ )
+	for ( int j = 0; j < nodevec.size(); ++j ) {
+		Node *node = nodevec[j];
+		EdgeSet *edges = node->edges();
 		sum = 0;
-		for (auto& edge: *edges) {
-			i = imap[edge];
-			sum += C[i] / nodemap[edge]->size();
+		for (auto& tarnode: *edges) {
+			i = tarnode->index();
+			sum += C[i] / nodevec[i]->size();
 		}
-		i = imap[keys[j]];
+		i = node->index();
 		C_[i] = sum;
 	}
 }
@@ -153,15 +185,17 @@ void credit_update (CreditVec &C, CreditVec &C_) {
  */
 void write_output ( std::string filename, std::vector<CreditVec> updates ) {
 	FILE * pfile = fopen ( filename.c_str(), "w" );
-	std::map<GraphSize, EdgeSet*> sorted_nodemap( nodemap.begin(), nodemap.end() );
+	//std::map<GraphSize, EdgeSet*> sorted_nodemap( nodemap.begin(), nodemap.end() );
+	
+	// sort nodevec by id
+   	std::sort( nodevec.begin(), nodevec.end(), nodecomp() );
 
-	for ( auto& kv : sorted_nodemap ) {
-		GraphSize node = kv.first;
-		EdgeSet *edges = kv.second;
-		fprintf( pfile, "%lu\t%lu", node, edges ? edges->size() : 0 );
+	for ( auto& node : nodevec ) {
+		EdgeSet *edges = node->edges();
+		fprintf( pfile, "%lu\t%lu", node.id(), edges ? edges->size() : 0 );
 		// output update values for node n
 		for (int i=0; i<updates.size(); ++i) {
-			fprintf( pfile, "\t%.6lf", updates[i][imap[node]] );
+			fprintf( pfile, "\t%.6lf", updates[i][node.index()] );
 		}
 		fprintf( pfile, "\n" );
 	}
