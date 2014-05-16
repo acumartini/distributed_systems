@@ -12,6 +12,7 @@
 #include <time.h>
 #include <assert.h>
 
+#include "omp.h"
 #include "utils.h"
 #include "node.h"
 
@@ -126,17 +127,17 @@ void load_network(std::string filename) {
  * @params: C - stores the current credit values for each node in the network
  * 			C_ - stores the credit values for each node at time step t+1
  */
-void credit_update (CreditVec &C, CreditVec &C_) {
-	double sum;
+double credit_update (CreditVec &C, CreditVec &C_) {
+	double sum, start, end;
 	GraphSize i;
 	Node *node;
 
 	// compute credit for the next time step
-	#pragma omp parallel for private( sum, i, node ) shared( C, C_ )
+	// #pragma omp parallel for private( sum, i, node ) shared( C, C_ )
 	//for ( int j = 0; j < nodemap.size(); ++j ) {
-	for ( NodeMap::const_iterator kv = std::begin( nodemap); 
-		  kv != std::end( nodemap );
-		  ++kv ) {
+	start = omp_get_wtime();
+
+	for ( NodeMap::const_iterator kv = nodemap.begin(); kv != nodemap.end(); ++kv ) {
 		node = kv->second;
 		sum = 0;
 		for ( auto& tarnode: node->getEdges() ) {
@@ -146,6 +147,29 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 		i = node->index();
 		C_[i] = sum;
 	}
+
+	// #pragma omp parallel
+	// #pragma omp single
+	// {
+	// 	for ( NodeMap::const_iterator kv = nodemap.begin(); kv != nodemap.end(); ++kv ) {
+	// 		#pragma omp task private( sum, i, node ) firstprivate( kv ) shared( C, C_ )
+	// 		{
+	// 			node = kv->second;
+	// 			sum = 0;
+	// 			for ( auto& tarnode: node->getEdges() ) {
+	// 				i = tarnode->index();
+	// 				sum += C[i] / tarnode->edgeCount();
+	// 			}
+	// 			i = node->index();
+	// 			C_[i] = sum;
+	// 		}
+	// 	}
+	// 	#pragma omp taskwait
+	// }
+
+	end = omp_get_wtime();
+
+	return end - start;
 }
 
 /*
@@ -176,7 +200,8 @@ void write_output ( std::string filename, std::vector<CreditVec> updates ) {
 
 
 int main ( int argc , char** argv ) {
-	clock_t t1,t2;
+	//clock_t t1,t2;
+	double start, end, runtime;
 
 	// get cmdline args
 	std::string input_file = argv[1];
@@ -185,10 +210,12 @@ int main ( int argc , char** argv ) {
 
 	// initialize adjacency list vector hash
 	printf("Loading network edges from %s\n", input_file.c_str());
-	t1=clock();
+	//t1 = clock();
+	start = omp_get_wtime();
 	load_network(input_file);
-	t2=clock();
-	printf( "Time to read input file = %f seconds\n", utils::elapsed_time(t1, t2) );
+	end = omp_get_wtime();
+	//t2 = clock();
+	printf( "Time to read input file = %lf seconds\n", end - start ); // utils::elapsed_time(t1, t2) );
 	
 	// compute the normalized credit after numSteps
 	printf("\nComputing the Credit Values for %d Rounds:\n", num_steps);
@@ -204,10 +231,10 @@ int main ( int argc , char** argv ) {
 	for (int i=0; i<num_steps; ++i) {
 		printf("round %d = ", i+1);
 
-		t1=clock();
-		credit_update(C, C_);
-		t2=clock();
-		printf( "%f seconds\n", utils::elapsed_time(t1, t2) );
+		//t1=clock();
+		runtime = credit_update(C, C_);
+		//t2=clock();
+		printf( "%lf seconds\n", runtime );//utils::elapsed_time(t1, t2) );
 
 		// compute and store the average squared difference between C(t-1,i) and C(t, i)
 		// diff_avg[i] = utils::compute_diff_avg(C, C_);
