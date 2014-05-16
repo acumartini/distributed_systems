@@ -8,8 +8,6 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
@@ -19,7 +17,7 @@
 
 
 // global network storage
-NodeVec nodevec;
+ NodeMap nodemap;
 
 
 /*
@@ -59,7 +57,7 @@ int get_nodes(const std::string &line, NodePair &nodes) {
  */
 void load_network(std::string filename) {
 	std::string line;
-	NodeMap nodemap;
+	//NodeMap nodemap;
 	NodePair nodes;
 	Node *node, *srcnode, *tarnode;
 	NodeMap::const_iterator got;
@@ -109,11 +107,11 @@ void load_network(std::string filename) {
 			}
    		}
    		// populate node vector and add indices
-   		nodevec.resize( nodemap.size() );
+   		//nodevec.resize( nodemap.size() );
    		GraphSize i = 0;
    		for ( auto& kv: nodemap ) {
    			node = kv.second;
-   			nodevec[i] = node;
+   			//nodevec[i] = node;
    			node->setIndex( i++ );
    		}
 	}
@@ -135,8 +133,11 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 
 	// compute credit for the next time step
 	#pragma omp parallel for private( sum, i, node ) shared( C, C_ )
-	for ( int j = 0; j < nodevec.size(); ++j ) {
-		node = nodevec[j];
+	//for ( int j = 0; j < nodemap.size(); ++j ) {
+	for ( NodeMap::const_iterator kv = std::begin( nodemap); 
+		  kv != std::end( nodemap );
+		  ++kv ) {
+		node = kv->second;
 		sum = 0;
 		for ( auto& tarnode: node->getEdges() ) {
 			i = tarnode->index();
@@ -151,12 +152,17 @@ void credit_update (CreditVec &C, CreditVec &C_) {
  * Writes the network and random walk information to the given file.
  */
 void write_output ( std::string filename, std::vector<CreditVec> updates ) {
-	FILE * pfile = fopen ( filename.c_str(), "w" );
+	FILE *pfile = fopen ( filename.c_str(), "w" );
+	Node *node;
 	
-	// sort nodevec by id
-   	std::sort( nodevec.begin(), nodevec.end(), nodecomp() );
+	// sort nodemap by id
+	OrderedNodeMap ordered_nodemap( nodemap.begin(), nodemap.end() );
 
-	for ( auto& node : nodevec ) {
+	// sort nodevec by id
+   	//std::sort( nodevec.begin(), nodevec.end(), nodecomp() );
+
+	for ( auto& kv : ordered_nodemap ) {
+		node = kv.second;
 		fprintf( pfile, "%lu\t%lu", node->id(), node->edgeCount() );
 		// output update values for node n
 		for ( int i = 0; i < updates.size(); ++i ) {
@@ -186,8 +192,8 @@ int main ( int argc , char** argv ) {
 	
 	// compute the normalized credit after numSteps
 	printf("\nComputing the Credit Values for %d Rounds:\n", num_steps);
-	CreditVec C(nodevec.size(), 1); // initialize credit at t=0 to 1 for each node
-	CreditVec C_(nodevec.size(), 0);
+	CreditVec C(nodemap.size(), 1); // initialize credit at t=0 to 1 for each node
+	CreditVec C_(nodemap.size(), 0);
 	CreditVec Cnorm;
 	std::vector<CreditVec> distribs(num_steps);
 	std::vector<CreditVec> updates(num_steps);
@@ -227,8 +233,8 @@ int main ( int argc , char** argv ) {
 	utils::save_results(distribs, diff_avg, stdevs);
 
 	// free heap memory
-	for ( auto& node: nodevec ) {
-		delete node;
+	for ( auto& kv: nodemap ) {
+		delete kv.second;
 	}
 
 	return 0 ;

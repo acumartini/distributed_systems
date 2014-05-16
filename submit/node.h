@@ -8,15 +8,10 @@
 #ifndef NODE_H_
 #define NODE_H_
 
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-#include <numeric>
-#include <iterator>
-#include <vector>
-#include <cmath>
-#include <time.h>
 
+#include <unordered_map>
+#include <unordered_set>
+#include <map>
 
 typedef unsigned long GraphSize;
 
@@ -58,8 +53,9 @@ struct nodecomp
     }
 };
 
-typedef std::vector<Node*> NodeVec;
+//typedef std::vector<Node*> NodeVec;
 typedef std::unordered_map<GraphSize, Node*> NodeMap;
+typedef std::map<GraphSize, Node*> OrderedNodeMap;
 typedef std::pair<GraphSize, GraphSize> NodePair;
 typedef std::vector<double> CreditVec;
 
