@@ -167,7 +167,7 @@ void write_output ( std::string filename, std::vector<CreditVec> updates ) {
 
 
 int main ( int argc , char** argv ) {
-	double start, end, runtime;
+	double start, end;
 
 	// get cmdline args
 	std::string input_file = argv[1];
@@ -179,7 +179,7 @@ int main ( int argc , char** argv ) {
 	start = omp_get_wtime();
 	load_network(input_file);
 	end = omp_get_wtime();
-	printf( "Time to read input file = %lf seconds\n", start - end );
+	printf( "Time to read input file = %lf seconds\n", end - start );
 	
 	// compute the normalized credit after numSteps
 	printf("\nComputing the Credit Values for %d Rounds:\n", num_steps);
@@ -198,7 +198,7 @@ int main ( int argc , char** argv ) {
 		start = omp_get_wtime();
 		credit_update(C, C_);
 		end = omp_get_wtime();
-		printf( "%f seconds\n", start - end );
+		printf( "%f seconds\n", end - start );
 
 		// compute and store the average squared difference between C(t-1,i) and C(t, i)
 		// diff_avg[i] = utils::compute_diff_avg(C, C_);
