@@ -19,22 +19,23 @@ class Node {
 typedef std::unordered_set<Node*> EdgeSet;
 
 public:
+	Node (): node_id( -1 ) {} // default constructor for missing nodes
 	Node ( const GraphSize& id ): node_id( id ) {}
-	~Node () {}
+	~Node () { delete edge_set; }
 
-	const EdgeSet& getEdges() const { return edge_set; }
-	GraphSize edgeCount () { return edge_set.size(); }
+	const EdgeSet* getEdges() const { return edge_set; }
+	GraphSize edgeCount () { return edge_set->size(); }
 
 	const GraphSize& id () const { return node_id; }
 	const GraphSize& index () const { return node_index; }
 
-	void setIndex ( const GraphSize& index ) { node_index = index; }
-  	void addEdge ( Node *node ) { edge_set.insert( node ); }
+	//void setIndex ( const GraphSize& index ) { node_index = index; }
+  	void addEdge ( Node *node ) { edge_set->insert( node ); }
 
 private:
 	GraphSize node_id;
-	GraphSize node_index;
-	EdgeSet edge_set;
+	//GraphSize node_index;
+	EdgeSet *edge_set;
 };
 
 // Node comparator for sorting

@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <algorithm>
 #include <numeric>
 #include <iterator>
@@ -21,6 +22,8 @@
 typedef std::vector<double> CreditVec;
 
 namespace utils {
+
+	bool fexists( const std::string );
 
 	float elapsed_time(clock_t t1, clock_t t2);
 

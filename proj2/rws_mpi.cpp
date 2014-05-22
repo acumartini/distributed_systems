@@ -1,8 +1,8 @@
 /* Adam Martini
  * CIS 630 Distributed Systems
- * Project 1
- * rws.cpp
- * 4.20.14
+ * Project 2
+ * rws_mpi.cpp
+ * 5.17.14
  */
 
 #include <string>
@@ -10,14 +10,95 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "mpi.h"
 #include "omp.h"
 #include "utils.h"
 #include "node.h"
 
+#define  MASTER		0
+#define  TAG_0      0
+ 
 
 // global network storage
 NodeVec nodevec;
 
+
+int main (int argc, char *argv[]) {
+    // handle cmd args
+	int batch_size;
+	if ( argc < 3 ) {
+		printf( " Usage: ./rws_mpi <partition_id> <nodes_to_partition> <edge_view> <proc_add[0]> ... <proc_add<N-1>\n");
+		exit( 0 );
+	} else {
+		// get partition id for MASTER process
+		batch_size = INT_MIN;
+	}
+
+	// initialize/populate mpi specific vars local to each node
+	int  numtasks, taskid, len, dest, source;
+	char hostname[MPI_MAX_PROCESSOR_NAME];
+	MPI_Status status;
+
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+	MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
+	MPI_Get_processor_name(hostname, &len);
+
+
+	/***** MASTER TASK ONLY ******/
+
+	// perform data preprocessing based on number of workers and batch_size
+	if (taskid == MASTER) {
+		printf( "MASTER: Number of MPI tasks is: %d\n",numtasks );
+
+		/* DATA PREPROCESSING */
+
+
+        /* DATA MARSHALLING */
+
+        
+        // send data to processes
+  //       long offset = chunksize;
+		// for (dest=1; dest<numtasks; dest++) {
+		// 	MPI_Send( &chunksize, 1, MPI_LONG, dest, TAG_0, MPI_COMM_WORLD );
+		// 	MPI_Send( &numfeats, 1, MPI_LONG, dest, TAG_0, MPI_COMM_WORLD );
+		// 	MPI_Send( &numlabels, 1, MPI_LONG, dest, TAG_0, MPI_COMM_WORLD );
+		// 	MPI_Send( data.data() + offset * numfeats, chunksize * numfeats, MPI_FLOAT, dest, TAG_0, MPI_COMM_WORLD );
+		// 	MPI_Send( labels.data() + offset * numlabels, chunksize * numlabels, MPI_FLOAT, dest, TAG_0, MPI_COMM_WORLD );
+		// 	printf( "Sent %ld instances to task %d offset= %ld\n", chunksize, dest, offset );
+		// 	offset += chunksize;
+		// }
+
+
+		/* PERFORM RANDOM WALKS */
+
+
+		/* MODEL STORAGE */
+
+	} 
+
+	/***** NON-MASTER TASKS ONLY *****/
+
+	if (taskid > MASTER) {
+		printf ("Hello from task %d on %s!\n", taskid, hostname);
+
+		/* DATA INITIALIZATION */
+
+		// long chunksize, numfeats, numlabels;
+		// source = MASTER;
+		
+		// // recieve data partition
+		// MPI_Recv( &chunksize, 1, MPI_LONG, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status );
+		// MPI_Recv( &numfeats, 1, MPI_LONG, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status );
+		// MPI_Recv( &numlabels, 1, MPI_LONG, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status );
+		// printf( "Task %d chunksize = %ld\n", taskid, chunksize );
+		// printf( "Task %d numfeats = %ld\n", taskid, numfeats );
+		// printf( "Task %d numlabels = %ld\n", taskid, numlabels );
+
+	}
+
+	MPI_Finalize();
+}
 
 /*
  * Parse a line of network data input (an edge) into a source/target node integer pair.
