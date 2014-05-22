@@ -55,19 +55,23 @@ int get_nodes(const std::string &line, NodePair &nodes) {
  * Reads the network from the given file into the global adjacency list unordered map.
  */
 void load_network(std::string filename) {
-	std::string line;
+	//std::string line;
+	//char *src, *dest;
 	GraphSize source, target, max, cur_size;
 	NodePair nodes;
 	Node *node, *srcnode, *tarnode;
 
 	// load file and iterate through each line of input
 	std::ifstream infile(filename);
-	if ( infile ) {
-		while ( getline(infile, line, '\n') ) {
+	if ( infile.is_open() ) {
+		// while ( getline(infile, line, '\n') ) {
+		while ( infile >> source >> target ) { 
 		    // convert key to integer and update nodevec with valid input
-		    if ( get_nodes(line, nodes) != -1 ) {
-				source = nodes.first;
-				target = nodes.second;
+		    // if ( get_nodes(line, nodes) != -1 ) {
+				// source = nodes.first;
+				// target = nodes.second;
+				// source = atoi( src );
+				// target = atoi( dest );
 
 				// verify valid edge
 				if (source != target) {
@@ -96,9 +100,9 @@ void load_network(std::string filename) {
 					srcnode->addEdge( tarnode );
 					tarnode->addEdge( srcnode );
 				}
-			} else {
-				printf( "Input Error: 2 tokens per line expected.\n" );
-			}
+			// } else {
+			// 	printf( "Input Error: 2 tokens per line expected.\n" );
+			// }
    		}
 	}
 	infile.close( );
