@@ -20,43 +20,9 @@ NodeVec nodevec;
 
 
 /*
- * Parse a line of network data input (an edge) into a source/target node integer pair.
- */
-int get_nodes(const std::string &line, NodePair &nodes) {
-	std::string source, target;
-	int i = 0, j = 0;
-	char c = line[j];
-
-	// eat white space
-	while (!isdigit(c)) { c = line[++j]; }
-	i = j;
-	// get source node
-	while (isdigit(c)) { c = line[++j]; }
-	source = line.substr(i, j);
-	i = j;
-	// eat white space
-	while (!isdigit(c)) { c = line[++j]; }
-	i = j;
-	// get target node
-	while (isdigit(c)) { c = line[++j]; }
-	target = line.substr(i, j);
-
-	// test for empty strings
-	if (source.length() == 0 || target.length() == 0) { return -1; }
-
-	// convert node string to integers
-	nodes.first = stoi(source);
-	nodes.second = stoi(target);
-
-	return 0;
-}
-
-/*
  * Reads the network from the given file into the global adjacency list unordered map.
  */
 void load_network(std::string filename) {
-	//std::string line;
-	//char *src, *dest;
 	GraphSize source, target, max, cur_size;
 	NodePair nodes;
 	Node *node, *srcnode, *tarnode;
@@ -66,43 +32,33 @@ void load_network(std::string filename) {
 	if ( infile.is_open() ) {
 		// while ( getline(infile, line, '\n') ) {
 		while ( infile >> source >> target ) { 
-		    // convert key to integer and update nodevec with valid input
-		    // if ( get_nodes(line, nodes) != -1 ) {
-				// source = nodes.first;
-				// target = nodes.second;
-				// source = atoi( src );
-				// target = atoi( dest );
-
-				// verify valid edge
-				if (source != target) {
-					// check for resize
-					max = std::max( source, target );
-					if ( max >= nodevec.size() ) {
-						cur_size = nodevec.size();
-						nodevec.resize( max + 1 );
-						while ( cur_size <= max ) {
-							nodevec[cur_size++] = new Node();
-						}
+			// verify valid edge
+			if (source != target) {
+				// check for resize
+				max = std::max( source, target );
+				if ( max >= nodevec.size() ) {
+					cur_size = nodevec.size();
+					nodevec.resize( max + 1 );
+					while ( cur_size <= max ) {
+						nodevec[cur_size++] = new Node();
 					}
-
-					// get source node
-					srcnode = nodevec[source];
-					if ( srcnode->id() == -1 ) {
-						srcnode->setId( source );
-					}
-
-					// get target node
-					tarnode = nodevec[target];
-					if ( tarnode->id() == -1 ) {
-						tarnode->setId( target );
-					}
-
-					srcnode->addEdge( tarnode );
-					tarnode->addEdge( srcnode );
 				}
-			// } else {
-			// 	printf( "Input Error: 2 tokens per line expected.\n" );
-			// }
+
+				// get source node
+				srcnode = nodevec[source];
+				if ( srcnode->id() == -1 ) {
+					srcnode->setId( source );
+				}
+
+				// get target node
+				tarnode = nodevec[target];
+				if ( tarnode->id() == -1 ) {
+					tarnode->setId( target );
+				}
+
+				srcnode->addEdge( tarnode );
+				tarnode->addEdge( srcnode );
+			}
    		}
 	}
 	infile.close( );
