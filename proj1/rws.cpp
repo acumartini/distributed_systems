@@ -30,7 +30,6 @@ void load_network(std::string filename) {
 	// load file and iterate through each line of input
 	std::ifstream infile(filename);
 	if ( infile.is_open() ) {
-		// while ( getline(infile, line, '\n') ) {
 		while ( infile >> source >> target ) { 
 			// verify valid edge
 			if (source != target) {
@@ -85,10 +84,8 @@ void credit_update (CreditVec &C, CreditVec &C_) {
 		if ( id != -1 ) {
 			sum = 0;
 			for ( auto& tarnode: *(node->getEdges()) ) {
-				// i = tarnode->id();
 				sum += C[tarnode->id()] / tarnode->edgeCount();
 			}
-			// i = node->index();
 			C_[id] = sum;
 		}
 	}
