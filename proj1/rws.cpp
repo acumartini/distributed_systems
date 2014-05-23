@@ -31,34 +31,27 @@ void load_network(std::string filename) {
 	std::ifstream infile(filename);
 	if ( infile.is_open() ) {
 		while ( infile >> source >> target ) { 
-			// verify valid edge
-			if (source != target) {
-				// check for resize
+			// check for resize
+			if ( source >= nodevec.size() || target >= nodevec.size() ) {
 				max = std::max( source, target );
-				if ( max >= nodevec.size() ) {
-					cur_size = nodevec.size();
-					nodevec.resize( max + 1 );
-					while ( cur_size <= max ) {
-						nodevec[cur_size++] = new Node();
-					}
+				cur_size = nodevec.size();
+				nodevec.resize( max + 1 );
+				while ( cur_size <= max ) {
+					nodevec[cur_size++] = new Node();
 				}
-
-				// get source node
-				srcnode = nodevec[source];
-				if ( srcnode->id() == -1 ) {
-					srcnode->setId( source );
-				}
-
-				// get target node
-				tarnode = nodevec[target];
-				if ( tarnode->id() == -1 ) {
-					tarnode->setId( target );
-				}
-
-				srcnode->addEdge( tarnode );
-				tarnode->addEdge( srcnode );
 			}
-   		}
+
+			// get source node
+			srcnode = nodevec[source];
+			srcnode->setId( source );
+
+			// get target node
+			tarnode = nodevec[target];
+			tarnode->setId( target );
+
+			srcnode->addEdge( tarnode );
+			tarnode->addEdge( srcnode );
+		}
 	}
 	infile.close( );
 }
