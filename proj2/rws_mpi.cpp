@@ -154,10 +154,10 @@ void init_message_buffers() {
 	// initialize send/receive buffers
 	snodes = (ExtNode*)malloc(sizeof(ExtNode)*size); //new ExtNode[ssize];
 	rnodes = (ExtNode*)malloc(sizeof(ExtNode)*size); //new ExtNode[rsize];
-	for ( GraphSize i=0; i<ssize; ++i ) {
+	for ( GraphSize i=0; i<size; ++i ) {
 		snodes[i] = ExtNode();
 	}
-	for ( GraphSize i=0; i<rsize; ++i ) {
+	for ( GraphSize i=0; i<size; ++i ) {
 		rnodes[i] = ExtNode();
 	}
 }
