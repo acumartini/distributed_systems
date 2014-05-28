@@ -168,10 +168,10 @@ void communicate_credit_updates() {
 
 	// update local Node credit values
 	for ( int i=0; i<rsize; ++i ) {
-		id = rnodes[i]->id;
+		id = rnodes[i].id;
 		if ( id != -1 ) {
 			node = nodevec[id];
-			node->setCredit( rnodes[i]->credit );
+			node->setCredit( rnodes[i].credit );
 		}
 	}
 }
@@ -207,7 +207,7 @@ void credit_update ( CreditVec &C ) {
  * Writes the network and random walk information to the given file.
  */
 void write_output ( std::vector<CreditVec> updates ) {
-	FILE *pfile = fopen ( std::to_string( taskid ) + std::string( ".out" ), "w" );
+	FILE *pfile = fopen ( (std::to_string( taskid ) + ".out").c_str(), "w" );
 	Node *node;
 	
 	// sort nodevec by id
