@@ -30,7 +30,7 @@ int num_rounds;
 // message passing variables
 MPI_Datatype ext_node_type;
 int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
-ExtNode **snodes, **rnodes;
+std::vector<ExtNode*> snodes, rnodes;
 
 
 /*
@@ -130,8 +130,8 @@ void init_message_buffers() {
 	}
 
 	// initialize send/receive buffers
-	snodes = new *ExtNode[ssize];
-	rnodes = new *ExtNode[rsize];
+	snodes.resize( ssize );
+	rnodes.resize( rsize );
 	for ( int i=0; i<ssize; ++i ) {
 		snodes[i] = new ExtNode();
 	}
@@ -208,7 +208,6 @@ void credit_update ( CreditVec &C ) {
  */
 void write_output ( std::vector<CreditVec> updates ) {
 	FILE * pfile = fopen ( std::stoi( taskid ) + ".out", "w" );
-	GraphSize id;
 	Node *node;
 	
 	// sort nodevec by id
@@ -230,7 +229,7 @@ void write_output ( std::vector<CreditVec> updates ) {
 
 int main (int argc, char *argv[]) {
 	double start, end;
-	
+
 	// initialize/populate mpi specific vars local to each node
 	char hostname[MPI_MAX_PROCESSOR_NAME];
 	MPI_Status status;
