@@ -143,7 +143,10 @@ void communicate_credit_updates() {
 	}
     
 	// populate sending nodes with credit updates
-	for ( auto& id : partvec ) {
+	// for ( auto& id : partvec ) {
+	#pragma omp parallel for private( id, node, partition ) shared( partvec, nodevec, snodes, disp_counter )
+	for ( GraphSize i=0; i<partvec.size(); ++i ) {
+		id = partvec[i];
 		node = nodevec[id];
 		for ( auto& tarnode : *(node->getEdges()) ) {
 			partition = tarnode->partition() ;
@@ -270,7 +273,7 @@ int main (int argc, char *argv[]) {
 	/* NETWORK INITIALIZATION */
 	// load network
 	if ( is_master ) {
-		printf( "Reading input files:\n\tnodes to partition: %s\n\tedge view: %s\n", 
+		printf( "Reading input files:\n\tnodes to partition -- %s\n\tedge view -- %s\n", 
 				partition_file.c_str(), edge_view_file.c_str() );
 	}
 	start = omp_get_wtime();
@@ -286,8 +289,8 @@ int main (int argc, char *argv[]) {
     MPI_Aint extent, lower_bound;
     MPI_Type_get_extent( MPI_LONG, &lower_bound, &extent );
     MPI_Aint offsets[2] = { 0, 1*extent };
-    MPI_Type_create_struct(2, blocklen, offsets, types, &ExtNode_type);
-    MPI_Type_commit(&ExtNode_type);
+    MPI_Type_create_struct( 2, blocklen, offsets, types, &ExtNode_type );
+    MPI_Type_commit( &ExtNode_type );
 
     // initialize all-to-all buffers
 	init_message_buffers();
