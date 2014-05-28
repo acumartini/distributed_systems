@@ -35,7 +35,7 @@ public:
 
 	void setId ( const GraphSize& id ) { node_id = id; }
 	void setPartition ( const GraphSize& partition ) { part_id = partition; }
-	coid setDegree ( const GraphSize& degree ) { node_degree = degree; }
+	void setDegree ( const GraphSize& degree ) { node_degree = degree; }
   	void addEdge ( Node* node ) { edge_set->push_back( node ); }
   	void setCredit ( const double& credit ) { cur_credit = credit; }
   	void setIndex ( const GraphSize& index ) { local_index = index; }

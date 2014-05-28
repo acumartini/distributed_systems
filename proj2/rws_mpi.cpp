@@ -30,7 +30,7 @@ int num_rounds;
 // message passing variables
 MPI_Datatype ext_node_type;
 int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
-ExtNode *snodes, *rnodes;
+ExtNode **snodes, **rnodes;
 
 
 /*
@@ -39,7 +39,7 @@ ExtNode *snodes, *rnodes;
 void load_network( std::string edge_view_file, std::string partition_file ) {
 	GraphSize source, target, degree, max, cur_size;
 	int partition;
-	Node *node, *srcnode, *tarnode;
+	Node *srcnode, *tarnode;
 
 	// load edgeview file and iterate over each line
 	std::ifstream edgefile( edge_view_file );
@@ -91,7 +91,7 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 
 void init_message_buffers() {
 	Node *node;
-	GraphSize local_max, partition;
+	GraphSize partition;
 	
 	scounts = new int[numtasks];
 	for ( int i=0; i<numtasks; ++i ){
@@ -100,8 +100,8 @@ void init_message_buffers() {
 
 	for ( auto& id : partvec ) {
 		node = nodevec[id];
-		for ( auto& edge_node : node->getEdges() ) {
-			partition = edge_node.partition();
+		for ( auto& edge_node : *(node->getEdges()) ) {
+			partition = edge_node->partition();
 			if ( partition != taskid ) {
 				scounts[partition]++;
 			}
@@ -130,8 +130,8 @@ void init_message_buffers() {
 	}
 
 	// initialize send/receive buffers
-	snodes = new ExtNode[ssize];
-	rnodes = new ExtNode[rsize];
+	snodes = new *ExtNode[ssize];
+	rnodes = new *ExtNode[rsize];
 	for ( int i=0; i<ssize; ++i ) {
 		snodes[i] = new ExtNode();
 	}
@@ -150,7 +150,7 @@ void communicate_credit_updates() {
 	// populate sending nodes with credit updates
 	for ( auto& id : partvec ) {
 		node = nodevec[id];
-		for ( auto& tarnode : node->getEdges() ) {
+		for ( auto& tarnode : *(node->getEdges()) ) {
 			partition = tarnode->partition() ;
 			if ( taskid != partition ) {
 				extnode = snodes[disp_counter[partition]];
@@ -229,13 +229,15 @@ void write_output ( std::vector<CreditVec> updates ) {
 
 
 int main (int argc, char *argv[]) {
+	double start, end;
+	
 	// initialize/populate mpi specific vars local to each node
 	char hostname[MPI_MAX_PROCESSOR_NAME];
 	MPI_Status status;
 	MPI_Init( &argc, &argv );
 	MPI_Comm_size( MPI_COMM_WORLD, &numtasks );
 	MPI_Comm_rank( MPI_COMM_WORLD, &taskid );
-	is_master = ( tasid == MASTER ) ? true : false;
+	is_master = ( taskid == MASTER ) ? true : false;
 
     // handle cmd args
     std::string partition_file;
