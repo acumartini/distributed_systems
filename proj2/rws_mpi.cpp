@@ -107,16 +107,16 @@ void init_message_buffers() {
 	counts=(int*)malloc(sizeof(int)*numtasks);
 	disp=(int*)malloc(sizeof(int)*numtasks);
 
-	// count sends
+	// count external dependencies
 	for ( int i=0; i<numtasks; ++i ){
-		scounts[i] = 0;
+		counts[i] = 0;
 	}
 	for ( auto& id : partvec ) {
 		node = nodevec[id];
 		for ( auto& edge_node : *(node->getEdges()) ) {
 			partition = edge_node->partition();
 			if ( partition != taskid ) {
-				scounts[partition]++;
+				counts[partition]++;
 			}
 		}
 	}
