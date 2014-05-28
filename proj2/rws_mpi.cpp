@@ -11,7 +11,7 @@
 #include <assert.h>
 
 #include "mpi.h"
-#include "omp.h"
+// #include "omp.h"
 #include "utils.h"
 #include "node.h"
 
@@ -117,8 +117,8 @@ void init_message_buffers() {
 
 	// exchange send count info
     printf( "Alltoall\n" );
-	MPI_Alltoall( &scounts, 1, MPI_UNSIGNED_LONG,
-				  &rcounts, 1, MPI_UNSIGNED_LONG,
+	MPI_Alltoall( scounts, 1, MPI_UNSIGNED_LONG,
+				  rcounts, 1, MPI_UNSIGNED_LONG,
 				  MPI_COMM_WORLD );
 	printf( "Alltoall finished\n" );
 
@@ -202,7 +202,7 @@ void credit_update ( CreditVec &C ) {
 	Node *node;
 
 	// compute credit for the next time step
-	#pragma omp parallel for private( sum, node, id ) shared( C )
+	// #pragma omp parallel for private( sum, node, id ) shared( C )
 	for ( GraphSize i = 0; i < nodevec.size(); ++i ) {
 		node = nodevec[i];
 		id = node->id();
