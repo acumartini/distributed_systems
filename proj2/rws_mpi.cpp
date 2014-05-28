@@ -116,6 +116,7 @@ void init_message_buffers() {
 	}
 
 	// exchange send count info
+    printf( "Alltoall\n" );
 	MPI_Alltoall( &scounts, 1, MPI_INT,
 				  &rcounts, 1, MPI_INT,
 				  MPI_COMM_WORLD );
@@ -145,6 +146,7 @@ void init_message_buffers() {
 	for ( int i=0; i<rsize; ++i ) {
 		rnodes[i] = ExtNode();
 	}
+    printf( "Finished init\n" );
 }
 
 void communicate_credit_updates() {
@@ -153,6 +155,8 @@ void communicate_credit_updates() {
 	GraphSize id;
 	int partition;
 	std::vector<int> disp_counter( numtasks, 0 );
+    
+    printf( "Entering Comm Credit Updates\n" );
 
 	// populate sending nodes with credit updates
 	for ( auto& id : partvec ) {
@@ -166,7 +170,7 @@ void communicate_credit_updates() {
 				disp_counter[partition]++;
 			}
 		}
-	}
+    }
 
 	// communicate individual to all other nodes
 	MPI_Alltoallv( snodes, scounts, sdisp, ext_node_type,
@@ -317,6 +321,7 @@ int main (int argc, char *argv[]) {
 
 
 	/* PERFORM RANDOM WALKS */
+    printf( "Barrier\n" );
 	MPI_Barrier( MPI_COMM_WORLD );
 	if ( is_master ) { 
 		printf("\nComputing the Credit Values for %d Rounds:\n", num_rounds);
