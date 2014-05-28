@@ -41,7 +41,7 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 	int partition;
 	Node *srcnode, *tarnode;
 
-	// load edgeview file and iterate over each line
+	// load edge view file and iterate over each line
 	std::ifstream edgefile( edge_view_file );
 	if ( edgefile.is_open() ) {
 		while ( edgefile >> source >> target ) { 
@@ -83,12 +83,10 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 			if ( taskid == partition ) {
 				partvec.push_back( source );
 				srcnode->setIndex( cur_index++ );
-                //printf( "source %lu index %lu\n", source, srcnode->index() );
 			}
 		}
 	}
 	partfile.close();
-    //assert( false );
 }
 
 void init_message_buffers() {
@@ -120,20 +118,11 @@ void init_message_buffers() {
 			}
 		}
 	}
-	for ( int i=0; i<numtasks; ++i ) {
-		printf( "parition %d scounts[%d] = %d\n", taskid, i, scounts[i] ); 
-	}
 
 	// exchange send count info
-    printf( "Alltoall\n" );
 	MPI_Alltoall( scounts, 1, MPI_INT,
 				  rcounts, 1, MPI_INT,
 				  MPI_COMM_WORLD );
-	printf( "Alltoall finished\n" );
-
-	for ( int i=0; i<numtasks; ++i ) {
-		printf( "parition %d rcounts[%d] = %d\n", taskid, i, rcounts[i] ); 
-	}
 
 	// calculate displacements and buffer sizes
 	sdisp[0]=0;
@@ -169,23 +158,14 @@ void init_message_buffers() {
 
 void communicate_credit_updates() {
 	Node *node;
-	// ExtNode *extnode;
 	GraphSize id;
 	int partition;
-	//std::vector<int> disp_counter( sdisp, sdisp + sizeof(sdisp) / sizeof(sdisp[0]) );
-	// int disp_counter[numtasks];
-    // std::memcp( disp_counter, sdisp, sizeof(int)*numtasks );
+
     std::vector<int> disp_counter;
     for ( int i=0; i<numtasks; ++i ) {
 		disp_counter.push_back( sdisp[i] );
-		printf( "partition %d disp_counter[%d] %d\n", taskid, i, disp_counter[i] );
 	}
-	// for ( auto& c : disp_counter ) {
-	// 	printf( "partition %d c %d\n", taskid, c );
-	// }
     
-    printf( "partition %d Entering Comm Credit Updates\n", taskid );
-
 	// populate sending nodes with credit updates
 	for ( auto& id : partvec ) {
 		node = nodevec[id];
@@ -200,22 +180,15 @@ void communicate_credit_updates() {
     }
 
 	// communicate individual to all other nodes
-	printf( "Alltoallv\n" );
 	MPI_Alltoallv( snodes, scounts, sdisp, ExtNode_type,
 				   rnodes, rcounts, rdisp, ExtNode_type,
 				   MPI_COMM_WORLD );
-	printf( "Alltoallv finished\n" );
 
 	// update local Node credit values
 	for ( int i=0; i<rsize; ++i ) {
 		id = rnodes[i].id;
 		node = nodevec[id];
 		node->setCredit( rnodes[i].credit );
-		if ( id == -1 ) {
-			printf( "ERROR: -1 id in received.\n" );
-			// node = nodevec[id];
-			// node->setCredit( rnodes[i].credit );
-		}
 	}
 }
 
@@ -238,14 +211,8 @@ void credit_update ( CreditVec &C ) {
 		id = node->id();
 		sum = 0;
 		for ( auto& tarnode: *(node->getEdges()) ) {
-			// if ( tarnode->partition() == taskid ) {
-			// 	sum += C[tarnode->index()];
-			// 	node->setCredit( C[node->index()] );
-			// } else {
-				sum += tarnode->credit() / tarnode->degree();
-			// }
+			sum += tarnode->credit() / tarnode->degree();
 		}
-        // printf( "sum = %f node->index() = %lu\n", sum, node->index() );
 		C[node->index()] = sum;
 	}
 
@@ -285,8 +252,6 @@ int main (int argc, char *argv[]) {
 	double start, end;
 
 	// initialize/populate mpi specific vars local to each node
-	// char hostname[MPI_MAX_PROCESSOR_NAME];
-	// MPI_Status status;
 	MPI_Init( &argc, &argv );
 	MPI_Comm_size( MPI_COMM_WORLD, &numtasks );
 	MPI_Comm_rank( MPI_COMM_WORLD, &taskid );
@@ -340,7 +305,6 @@ int main (int argc, char *argv[]) {
 
 	/* INITIALIZE MESSAGE PASSING INFRASTRUCTURE */
 	// define a custom datatype for external node credit info
-	// MPI_Datatype ExtNode_type;
     MPI_Datatype types[2] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
     int blocklen[2] = { 1, 1 };
     MPI_Aint extent, lower_bound;
