@@ -142,10 +142,10 @@ void init_message_buffers() {
 	// initialize send/receive buffers
 	snodes = new ExtNode[ssize];
 	rnodes = new ExtNode[rsize];
-	for ( int i=0; i<ssize; ++i ) {
+	for ( GraphSize i=0; i<ssize; ++i ) {
 		snodes[i] = ExtNode();
 	}
-	for ( int i=0; i<rsize; ++i ) {
+	for ( GraphSize i=0; i<rsize; ++i ) {
 		rnodes[i] = ExtNode();
 	}
     printf( "Finished init\n" );
