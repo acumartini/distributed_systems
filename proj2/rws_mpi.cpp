@@ -29,7 +29,7 @@ int num_rounds;
 
 // message passing variables
 MPI_Datatype ext_node_type;
-GraphSize *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
+int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
 ExtNode *snodes, *rnodes;
 
 
@@ -100,10 +100,10 @@ void init_message_buffers() {
 	// rcounts = new unsigned long[numtasks];
 	// sdisp = new unsigned long[numtasks];
 	// rdisp = new unsigned long[numtasks];
-	scounts=(GraphSize*)malloc(sizeof(GraphSize)*numtasks);
-	rcounts=(GraphSize*)malloc(sizeof(GraphSize)*numtasks);
-	sdisp=(GraphSize*)malloc(sizeof(GraphSize)*numtasks);
-	rdisp=(GraphSize*)malloc(sizeof(GraphSize)*numtasks);
+	scounts=(int*)malloc(sizeof(int)*numtasks);
+	rcounts=(int*)malloc(sizeof(int)*numtasks);
+	sdisp=(int*)malloc(sizeof(int)*numtasks);
+	rdisp=(int*)malloc(sizeof(int)*numtasks);
 
 	// count sends
 	for ( int i=0; i<numtasks; ++i ){
@@ -118,11 +118,14 @@ void init_message_buffers() {
 			}
 		}
 	}
+	for ( int i=0; i<numtasks; ++i ) {
+		printf( "parition %d scounts[%d] = %d\n", taskid, scounts[i] ); 
+	}
 
 	// exchange send count info
     printf( "Alltoall\n" );
-	MPI_Alltoall( scounts, 1, MPI_UNSIGNED_LONG,
-				  rcounts, 1, MPI_UNSIGNED_LONG,
+	MPI_Alltoall( scounts, 1, MPI_INT,
+				  rcounts, 1, MPI_INT,
 				  MPI_COMM_WORLD );
 	printf( "Alltoall finished\n" );
 
