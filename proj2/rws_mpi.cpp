@@ -131,6 +131,10 @@ void init_message_buffers() {
 				  MPI_COMM_WORLD );
 	printf( "Alltoall finished\n" );
 
+	for ( int i=0; i<numtasks; ++i ) {
+		printf( "parition %d rcounts[%d] = %d\n", taskid, i, rcounts[i] ); 
+	}
+
 	// calculate displacements and buffer sizes
 	sdisp[0]=0;
 	for( int i=1; i<numtasks; ++i ) {
@@ -149,7 +153,7 @@ void init_message_buffers() {
 	for ( int i=0; i<numtasks; ++i ) {
 		printf( "parition %d sdisp[%d] = %d rdisp[%d] = %d\n", taskid, i, sdisp[i], i, rdisp[i] ); 
 	}
-	printf( "computed sizes ssize = %d rrsize = %d\n", ssize, rsize );
+	printf( "parition %d computed sizes ssize = %d rrsize = %d\n", taskid, ssize, rsize );
 
 	// initialize send/receive buffers
 	snodes = (ExtNode*)malloc(sizeof(ExtNode)*ssize); //new ExtNode[ssize];
