@@ -28,7 +28,6 @@ bool is_master;
 int num_rounds;
 
 // message passing variables
-MPI_Datatype ExtNode_type;
 int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
 ExtNode *snodes, *rnodes;
 
@@ -172,10 +171,16 @@ void communicate_credit_updates() {
 	// ExtNode *extnode;
 	GraphSize id;
 	int partition;
-	std::vector<int> disp_counter( sdisp, sdisp + sizeof(sdisp) / sizeof(sdisp[0]) );
-	for ( auto& c : disp_counter ) {
-		printf( "partition %d c %d\n", taskid, c );
+	//std::vector<int> disp_counter( sdisp, sdisp + sizeof(sdisp) / sizeof(sdisp[0]) );
+	int *disp_counter = int[numtasks];
+	memcopy( disp_counter, sdisp, sizeof(int)*numtasks );
+	for ( int i=0; i<numtasks; ++i ) {
+		printf( "partition %d disp_counter[%d] %d\n", taskid, i, disp_counter[i] );
+		// disp_counter.push_back()
 	}
+	// for ( auto& c : disp_counter ) {
+	// 	printf( "partition %d c %d\n", taskid, c );
+	// }
     
     printf( "partition %d Entering Comm Credit Updates\n", taskid );
 
@@ -225,7 +230,7 @@ void credit_update ( CreditVec &C ) {
 	Node *node;
 
 	// compute credit for the next time step
-	#pragma omp parallel for private( sum, node, id ) shared( C )
+	#pragma omp parallel for private( sum, node, id ) shared( C, C_ )
 	for ( GraphSize i = 0; i < partvec.size(); ++i ) {
 		node = nodevec[partvec[i]];
 		id = node->id();
@@ -333,13 +338,13 @@ int main (int argc, char *argv[]) {
 
 	/* INITIALIZE MESSAGE PASSING INFRASTRUCTURE */
 	// define a custom datatype for external node credit info
-	// MPI_Datatype ExtNode_type;
+	MPI_Datatype ExtNode_type;
     MPI_Datatype types[2] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
     int blocklen[2] = { 1, 1 };
     MPI_Aint extent, lower_bound;
     MPI_Type_get_extent( MPI_UNSIGNED_LONG, &lower_bound, &extent );
     MPI_Aint offsets[2] = { 0, 1*extent };
-    MPI_Type_create_struct(2, blocklen, offsets, types, &ExtNode_type);
+    MPI_Type_create_struct(2, blockcounts, offsets, types, &ExtNode_type);
     MPI_Type_commit(&ExtNode_type);
 
     // initialize all-to-all buffers
