@@ -146,7 +146,7 @@ void init_message_buffers() {
 	}
 	ssize = 0;
 	rsize = 0;
-	for( int i=1; i<numtasks; ++i ) {
+	for( int i=0; i<numtasks; ++i ) {
 		ssize += scounts[i];
 		rsize += rcounts[i];
 	}
@@ -172,7 +172,7 @@ void communicate_credit_updates() {
 	// ExtNode *extnode;
 	GraphSize id;
 	int partition;
-	std::vector<int> disp_counter( numtasks, 0 );
+	std::vector<int> disp_counter( sdisp, sdisp + sizeof(sdisp) / sizeof(sdisp[0]) );
     
     printf( "partition %d Entering Comm Credit Updates\n", taskid );
 
