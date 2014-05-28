@@ -165,7 +165,7 @@ void communicate_credit_updates() {
 	int partition;
 	std::vector<int> disp_counter( numtasks, 0 );
     
-    printf( "Entering Comm Credit Updates\n" );
+    printf( "partition %d Entering Comm Credit Updates\n", taskid );
 
 	// populate sending nodes with credit updates
 	for ( auto& id : partvec ) {
@@ -173,7 +173,6 @@ void communicate_credit_updates() {
 		for ( auto& tarnode : *(node->getEdges()) ) {
 			partition = tarnode->partition() ;
 			if ( taskid != partition ) {
-				// extnode = snodes[disp_counter[partition]];
 				snodes[disp_counter[partition]].id = node->id();
 				snodes[disp_counter[partition]].credit = node->credit();
 				disp_counter[partition]++;
@@ -209,17 +208,22 @@ void credit_update ( CreditVec &C ) {
 	Node *node;
 
 	// compute credit for the next time step
-	// #pragma omp parallel for private( sum, node, id ) shared( C )
-	for ( GraphSize i = 0; i < nodevec.size(); ++i ) {
-		node = nodevec[i];
+	#pragma omp parallel for private( sum, node, id ) shared( C )
+	for ( GraphSize i = 0; i < partvec.size(); ++i ) {
+		node = nodevec[partvec[i]];
 		id = node->id();
-		if ( id != -1 && taskid == node->partition() ) {
-			sum = 0;
-			for ( auto& tarnode: *(node->getEdges()) ) {
-				sum += tarnode->credit() / tarnode->degree();
-			}
-			C[node->index()] = sum;
+		sum = 0;
+		for ( auto& tarnode: *(node->getEdges()) ) {
+			sum += tarnode->credit() / tarnode->degree();
 		}
+		C[node->index()] = sum;
+	}
+
+	// update credit for nodes in this partition
+	#pragma omp parallel for private( node )
+	for ( GraphSize i = 0; i < partvec.size(); ++i ) {
+		node = nodevec[partvec[i]];
+		node->setCredit( C[node->index()] );
 	}
 }
 
