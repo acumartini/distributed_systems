@@ -142,7 +142,7 @@ void init_message_buffers() {
 
 void communicate_credit_updates() {
 	Node *node;
-	ExtNode *extnode;
+	// ExtNode *extnode;
 	GraphSize id;
 	int partition;
 	std::vector<int> disp_counter( numtasks, 0 );
@@ -153,9 +153,9 @@ void communicate_credit_updates() {
 		for ( auto& tarnode : *(node->getEdges()) ) {
 			partition = tarnode->partition() ;
 			if ( taskid != partition ) {
-				extnode = snodes[disp_counter[partition]];
-				extnode->id = node->id();
-				extnode->credit = node->credit();
+				// extnode = snodes[disp_counter[partition]];
+				snodes[disp_counter[partition]]->id = node->id();
+				snodes[disp_counter[partition]]->credit = node->credit();
 				disp_counter[partition]++;
 			}
 		}
@@ -207,7 +207,7 @@ void credit_update ( CreditVec &C ) {
  * Writes the network and random walk information to the given file.
  */
 void write_output ( std::vector<CreditVec> updates ) {
-	FILE * pfile = fopen ( std::stoi( taskid ) + ".out", "w" );
+	FILE * pfile = fopen ( std::to_string( taskid ) + ".out", "w" );
 	Node *node;
 	
 	// sort nodevec by id
