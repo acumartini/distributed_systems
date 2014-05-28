@@ -19,7 +19,6 @@ bool fexists ( const std::string filename ) {
 /*
  * Outputs the time elapsed between t1 and t2 in seconds to standard output.
  */
-
 float elapsed_time(clock_t t1, clock_t t2) {
     float diff((float)t2-(float)t1);
     return diff / CLOCKS_PER_SEC;
@@ -31,7 +30,7 @@ float elapsed_time(clock_t t1, clock_t t2) {
 CreditVec normalize(CreditVec &C) {
 	CreditVec C_ = C;
 	double sum = std::accumulate(std::begin(C_), std::end(C_), 0.0);
-	for (int i=0; i<C_.size(); ++i) {
+	for (unsigned int i=0; i<C_.size(); ++i) {
 		C_[i] /= sum;
 	}
 
@@ -61,7 +60,7 @@ CreditVec scale(CreditVec &C, double &new_max, double &new_min) {
  */
 double compute_diff_avg(CreditVec &C, CreditVec &C_) {
 	double accum = 0.0;
-	for (int i=0; i<C.size(); ++i) {
+	for (unsigned int i=0; i<C.size(); ++i) {
 		accum += std::pow(C[i] - C_[i], 2);
 	}
 
