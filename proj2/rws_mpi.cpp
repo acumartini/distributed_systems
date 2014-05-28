@@ -92,6 +92,8 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 void init_message_buffers() {
 	Node *node;
 	GraphSize partition;
+
+	printf( "Entering init_message buffers\n" );
 	
 	// inti storage
 	scounts = new int[numtasks];
@@ -297,11 +299,11 @@ int main (int argc, char *argv[]) {
 
     // setup ext_node id
     offsets[0] = 0;
-    oldtypes[0] = MPI_LONG;
+    oldtypes[0] = MPI_UNSIGNED_LONG;
     blockcounts[0] = 1;
 
     // setup ext_node credit
-    MPI_Type_get_extent(MPI_LONG, &lower_bound, &extent);
+    MPI_Type_get_extent( MPI_UNSIGNED_LONG, &lower_bound, &extent );
     offsets[1] = 1*extent;
     oldtypes[1] = MPI_DOUBLE;
     blockcounts[1] = 1;
