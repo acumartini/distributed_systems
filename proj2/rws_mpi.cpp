@@ -173,6 +173,9 @@ void communicate_credit_updates() {
 	GraphSize id;
 	int partition;
 	std::vector<int> disp_counter( sdisp, sdisp + sizeof(sdisp) / sizeof(sdisp[0]) );
+	for ( auto& c : disp_counter ) {
+		printf( "partition %d c %d\n", taskid, c );
+	}
     
     printf( "partition %d Entering Comm Credit Updates\n", taskid );
 
@@ -199,9 +202,12 @@ void communicate_credit_updates() {
 	// update local Node credit values
 	for ( int i=0; i<rsize; ++i ) {
 		id = rnodes[i].id;
-		if ( id != -1 ) {
-			node = nodevec[id];
-			node->setCredit( rnodes[i].credit );
+		node = nodevec[id];
+		node->setCredit( rnodes[i].credit );
+		if ( id == -1 ) {
+			printf( "ERROR: -1 id in received.\n" );
+			// node = nodevec[id];
+			// node->setCredit( rnodes[i].credit );
 		}
 	}
 }
@@ -213,7 +219,7 @@ void communicate_credit_updates() {
  * 
  * @params: C - stores the credit values for each node at time step t+1
  */
-void credit_update ( CreditVec &C, CreditVec &C_ ) {
+void credit_update ( CreditVec &C ) {
 	double sum;
 	GraphSize id;
 	Node *node;
@@ -225,23 +231,23 @@ void credit_update ( CreditVec &C, CreditVec &C_ ) {
 		id = node->id();
 		sum = 0;
 		for ( auto& tarnode: *(node->getEdges()) ) {
-			if ( tarnode->partition() == taskid ) {
-				sum += C[tarnode->index()];
-				node->setCredit( C[node->index()] );
-			} else {
+			// if ( tarnode->partition() == taskid ) {
+			// 	sum += C[tarnode->index()];
+			// 	node->setCredit( C[node->index()] );
+			// } else {
 				sum += tarnode->credit() / tarnode->degree();
-			}
+			// }
 		}
         // printf( "sum = %f node->index() = %lu\n", sum, node->index() );
-		C_[node->index()] = sum;
+		C[node->index()] = sum;
 	}
 
-	// // update credit for nodes in this partition
-	// #pragma omp parallel for private( node )
-	// for ( GraphSize i = 0; i < partvec.size(); ++i ) {
-	// 	node = nodevec[partvec[i]];
-	// 	node->setCredit( C[node->index()] );
-	// }
+	// update credit for nodes in this partition
+	#pragma omp parallel for private( node )
+	for ( GraphSize i = 0; i < partvec.size(); ++i ) {
+		node = nodevec[partvec[i]];
+		node->setCredit( C[node->index()] );
+	}
 }
 
 /*
@@ -341,31 +347,26 @@ int main (int argc, char *argv[]) {
 
 
 	/* PERFORM RANDOM WALKS */
-    printf( "Barrier\n" );
 	MPI_Barrier( MPI_COMM_WORLD );
 	if ( is_master ) { 
 		printf("\nComputing the Credit Values for %d Rounds:\n", num_rounds);
 	}
 
 	CreditVec C( partvec.size(), 0 );
-	CreditVec C_( partvec.size(), 0 );
 	std::vector<CreditVec> updates( num_rounds );
 
 	for (int i=0; i<num_rounds; ++i) {
-		// send/recieve credit updates
-		if ( i != 0 ) { // skip first round
-			communicate_credit_updates();
-		}
-
 		// compute credit update
 		start = omp_get_wtime();
-		credit_update( C, C_ );
+		credit_update( C );
 
 		// store credit update before overwriting timestep t
-		updates[i] = C_;
-		C = C_;
+		updates[i] = C;
 		end = omp_get_wtime();
 		printf( "--- time for round %d, partition %d = %f seconds\n", i+1, taskid, end - start );
+
+		// send/recieve credit updates
+		communicate_credit_updates();
 
 		// wait for all processes to finish
 		MPI_Barrier( MPI_COMM_WORLD );
