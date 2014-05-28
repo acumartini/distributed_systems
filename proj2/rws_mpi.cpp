@@ -340,7 +340,7 @@ int main (int argc, char *argv[]) {
 		printf("\nComputing the Credit Values for %d Rounds:\n", num_rounds);
 	}
 
-	CreditVec C( partvec.size(), 0 );
+	CreditVec C( partvec.size(), 1 );
 	std::vector<CreditVec> updates( num_rounds );
 
 	for (int i=0; i<num_rounds; ++i) {
