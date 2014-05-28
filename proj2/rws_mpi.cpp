@@ -93,11 +93,16 @@ void init_message_buffers() {
 	Node *node;
 	GraphSize partition;
 	
+	// inti storage
 	scounts = new int[numtasks];
+	rcounts = new int[numtasks];
+	sdisp = new int[numtasks];
+	rdisp = new int[numtasks];
+
+	// count sends
 	for ( int i=0; i<numtasks; ++i ){
 		scounts[i] = 0;
 	}
-
 	for ( auto& id : partvec ) {
 		node = nodevec[id];
 		for ( auto& edge_node : *(node->getEdges()) ) {
@@ -286,17 +291,17 @@ int main (int argc, char *argv[]) {
 
 	/* INITIALIZE MESSAGE PASSING INFRASTRUCTURE */
 	// required data types to define a custom datatype for MPI
-    MPI_Datatype ext_node_type, oldtypes[2];
+    MPI_Datatype oldtypes[2];
     int blockcounts[2];
     MPI_Aint offsets[2], extent, lower_bound;
 
     // setup ext_node id
     offsets[0] = 0;
-    oldtypes[0] = MPI_UNSIGNED_LONG;
+    oldtypes[0] = MPI_LONG;
     blockcounts[0] = 1;
 
     // setup ext_node credit
-    MPI_Type_get_extent(MPI_UNSIGNED_LONG, &lower_bound, &extent);
+    MPI_Type_get_extent(MPI_LONG, &lower_bound, &extent);
     offsets[1] = 1*extent;
     oldtypes[1] = MPI_DOUBLE;
     blockcounts[1] = 1;
@@ -347,11 +352,17 @@ int main (int argc, char *argv[]) {
 
 	/* FINALIZE */
 	// free heap memory
+	delete scounts;
+	delete rcounts;
+	delete sdisp;
+	delete rdisp;
+	delete snodes;
+	delete rnodes;
 	for ( auto& node: nodevec ) {
 		delete node;
 	}
-
 	MPI_Finalize();
+	
 	return 0 ;
 }
 
