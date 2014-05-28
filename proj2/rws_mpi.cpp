@@ -30,7 +30,7 @@ int num_rounds;
 // message passing variables
 MPI_Datatype ext_node_type;
 int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
-std::vector<ExtNode*> snodes, rnodes;
+ExtNode *snodes, *rnodes;
 
 
 /*
@@ -130,13 +130,13 @@ void init_message_buffers() {
 	}
 
 	// initialize send/receive buffers
-	snodes.resize( ssize );
-	rnodes.resize( rsize );
+	snodes = new ExtNode[ssize];
+	rnodes = new ExtNode[rsize];
 	for ( int i=0; i<ssize; ++i ) {
-		snodes[i] = new ExtNode();
+		snodes[i] = ExtNode();
 	}
 	for ( int i=0; i<rsize; ++i ) {
-		rnodes[i] = new ExtNode();
+		rnodes[i] = ExtNode();
 	}
 }
 
