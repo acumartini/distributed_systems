@@ -143,10 +143,7 @@ void communicate_credit_updates() {
 	}
     
 	// populate sending nodes with credit updates
-	// for ( auto& id : partvec ) {
-	#pragma omp parallel for private( id, node, partition ) shared( partvec, nodevec, snodes, disp_counter )
-	for ( GraphSize i=0; i<partvec.size(); ++i ) {
-		id = partvec[i];
+	for ( auto& id : partvec ) {
 		node = nodevec[id];
 		for ( auto& tarnode : *(node->getEdges()) ) {
 			partition = tarnode->partition() ;
@@ -273,7 +270,7 @@ int main (int argc, char *argv[]) {
 	/* NETWORK INITIALIZATION */
 	// load network
 	if ( is_master ) {
-		printf( "Reading input files:\n\tnodes to partition -- %s\n\tedge view -- %s\n", 
+		printf( "Reading input files:\n\tnodes to partition - %s\n\tedge view - %s\n", 
 				partition_file.c_str(), edge_view_file.c_str() );
 	}
 	start = omp_get_wtime();
