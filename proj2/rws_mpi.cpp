@@ -11,7 +11,7 @@
 #include <assert.h>
 
 #include "mpi.h"
-// #include "omp.h"
+#include "omp.h"
 #include "utils.h"
 #include "node.h"
 
