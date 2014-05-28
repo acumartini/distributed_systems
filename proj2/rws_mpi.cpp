@@ -191,7 +191,7 @@ void communicate_credit_updates() {
 				   MPI_COMM_WORLD );
 
 	// update local Node credit values
-	for ( int i=0; i<rsize; ++i ) {
+	for ( int i=0; i<size; ++i ) {
 		id = rnodes[i].id;
 		node = nodevec[id];
 		node->setCredit( rnodes[i].credit );
