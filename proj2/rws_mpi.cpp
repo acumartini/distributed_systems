@@ -147,7 +147,7 @@ void init_message_buffers() {
 		rsize += rcounts[i];
 	}
 	for ( int i=0; i<numtasks; ++i ) {
-		printf( "parition %d sdisp[%d] = %d rdisp[%d] = %d\n", taskid, i, scounts[i], i, rdisp[i] ); 
+		printf( "parition %d sdisp[%d] = %d rdisp[%d] = %d\n", taskid, i, sdisp[i], i, rdisp[i] ); 
 	}
 	printf( "computed sizes ssize = %d rrsize = %d\n", ssize, rsize );
 
