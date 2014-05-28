@@ -280,8 +280,8 @@ int main (int argc, char *argv[]) {
 	/* NETWORK INITIALIZATION */
 	// load nodes
 	if ( is_master ) {
-		printf( "Reading input files %s, %s:\n", 
-				partition_file.c_str() edge_view_file.c_str() );
+		printf( "Reading input files %s %s:\n", 
+				partition_file.c_str(), edge_view_file.c_str() );
 	}
 	start = omp_get_wtime();
 	load_network( edge_view_file, partition_file  );
