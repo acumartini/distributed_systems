@@ -28,6 +28,7 @@ bool is_master;
 int num_rounds;
 
 // message passing variables
+MPI_Datatype ExtNode_type;
 int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
 ExtNode *snodes, *rnodes;
 
@@ -326,13 +327,13 @@ int main (int argc, char *argv[]) {
 
 	/* INITIALIZE MESSAGE PASSING INFRASTRUCTURE */
 	// define a custom datatype for external node credit info
-	MPI_Datatype ExtNode_type;
+	// MPI_Datatype ExtNode_type;
     MPI_Datatype types[2] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
     int blocklen[2] = { 1, 1 };
     MPI_Aint extent, lower_bound;
     MPI_Type_get_extent( MPI_UNSIGNED_LONG, &lower_bound, &extent );
     MPI_Aint offsets[2] = { 0, 1*extent };
-    MPI_Type_create_struct(2, blockcounts, offsets, types, &ExtNode_type);
+    MPI_Type_create_struct(2, blocklen, offsets, types, &ExtNode_type);
     MPI_Type_commit(&ExtNode_type);
 
     // initialize all-to-all buffers
