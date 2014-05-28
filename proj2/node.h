@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-typedef unsigned long GraphSize;
+typedef long GraphSize;
 
 
 class Node {

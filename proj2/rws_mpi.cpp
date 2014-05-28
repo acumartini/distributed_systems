@@ -268,9 +268,9 @@ int main (int argc, char *argv[]) {
 
 
 	/* NETWORK INITIALIZATION */
-	// load nodes
+	// load network
 	if ( is_master ) {
-		printf( "Reading input files %s %s:\n", 
+		printf( "Reading input files:\n\tnodes to partition: %s\n\tedge view: %s\n", 
 				partition_file.c_str(), edge_view_file.c_str() );
 	}
 	start = omp_get_wtime();
@@ -280,11 +280,11 @@ int main (int argc, char *argv[]) {
 
 
 	/* INITIALIZE MESSAGE PASSING INFRASTRUCTURE */
-	// define a custom datatype for external node credit info
-    MPI_Datatype types[2] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
+	// define a custom datatype for sending external node credit structs
+    MPI_Datatype types[2] = { MPI_LONG, MPI_DOUBLE };
     int blocklen[2] = { 1, 1 };
     MPI_Aint extent, lower_bound;
-    MPI_Type_get_extent( MPI_UNSIGNED_LONG, &lower_bound, &extent );
+    MPI_Type_get_extent( MPI_LONG, &lower_bound, &extent );
     MPI_Aint offsets[2] = { 0, 1*extent };
     MPI_Type_create_struct(2, blocklen, offsets, types, &ExtNode_type);
     MPI_Type_commit(&ExtNode_type);
@@ -309,11 +309,12 @@ int main (int argc, char *argv[]) {
 
 		// store credit update before overwriting timestep t
 		updates[i] = C;
-		end = omp_get_wtime();
-		printf( "--- time for round %d, partition %d = %f seconds\n", i+1, taskid, end - start );
 
 		// send/recieve credit updates
 		communicate_credit_updates();
+
+		end = omp_get_wtime();
+		printf( "--- time for round %d, partition %d = %f seconds\n", i+1, taskid, end - start );
 
 		// wait for all processes to finish
 		MPI_Barrier( MPI_COMM_WORLD );
