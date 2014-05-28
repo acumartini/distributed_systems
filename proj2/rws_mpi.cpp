@@ -365,10 +365,14 @@ int main (int argc, char *argv[]) {
 	// delete rdisp;
 	// delete snodes;
 	// delete rnodes;
-	free( scounts );
-	free( rcounts );
-	free( sdisp );
-	free( rdisp );
+	// free( scounts );
+	// free( rcounts );
+	// free( sdisp );
+	// free( rdisp );
+	// free( snodes );
+	// free( rnodes );
+	free( counts );
+	free( disp );
 	free( snodes );
 	free( rnodes );
 	for ( auto& node: nodevec ) {
