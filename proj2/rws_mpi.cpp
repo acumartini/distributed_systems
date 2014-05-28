@@ -146,11 +146,14 @@ void init_message_buffers() {
 		ssize += scounts[i];
 		rsize += rcounts[i];
 	}
+	for ( int i=0; i<numtasks; ++i ) {
+		printf( "parition %d sdisp[%d] = %d rdisp[%d] = %d\n", taskid, i, scounts[i], i, rdisp[i] ); 
+	}
 	printf( "computed sizes ssize = %d rrsize = %d\n", ssize, rsize );
 
 	// initialize send/receive buffers
-	snodes = new ExtNode[ssize];
-	rnodes = new ExtNode[rsize];
+	snodes = (ExtNode*)malloc(sizeof(ExtNode)*ssize); //new ExtNode[ssize];
+	rnodes = (ExtNode*)malloc(sizeof(ExtNode)*rsize); //new ExtNode[rsize];
 	for ( GraphSize i=0; i<ssize; ++i ) {
 		snodes[i] = ExtNode();
 	}
@@ -183,11 +186,11 @@ void communicate_credit_updates() {
     }
 
 	// communicate individual to all other nodes
-	printf( "Alltoall\n" );
+	printf( "Alltoallv\n" );
 	MPI_Alltoallv( snodes, scounts, sdisp, ext_node_type,
 				   rnodes, rcounts, rdisp, ext_node_type,
 				   MPI_COMM_WORLD );
-	printf( "Alltoall finished\n" );
+	printf( "Alltoallv finished\n" );
 
 	// update local Node credit values
 	for ( int i=0; i<rsize; ++i ) {
