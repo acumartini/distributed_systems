@@ -225,7 +225,7 @@ void write_output ( std::vector<CreditVec> updates ) {
 
 
 int main (int argc, char *argv[]) {
-	double start, end;
+	double start, end, total_start, total_end;
 
 	// initialize/populate mpi specific vars local to each node
 	MPI_Init( &argc, &argv );
@@ -302,22 +302,29 @@ int main (int argc, char *argv[]) {
 	CreditVec C( partvec.size(), 0 );
 	std::vector<CreditVec> updates( num_rounds );
 
-	for (int i=0; i<num_rounds; ++i) {
+	for (int i=1; i<=num_rounds; ++i) {
+		if ( is_master ) {
+			total_start = omp_get_wtime();
+		}
+
 		// compute credit update
 		start = omp_get_wtime();
 		credit_update( C );
 
 		// store credit update before overwriting timestep t
 		updates[i] = C;
+		end = omp_get_wtime();
+		printf( "--- time for round %d, partition %d = %f seconds\n", i, taskid, end - start );
 
 		// send/recieve credit updates
 		communicate_credit_updates();
 
-		end = omp_get_wtime();
-		printf( "--- time for round %d, partition %d = %f seconds\n", i+1, taskid, end - start );
-
 		// wait for all processes to finish
 		MPI_Barrier( MPI_COMM_WORLD );
+		if ( is_master ) {
+			total_end = omp_get_wtime();
+			printf( "total time for round %d: %f seconds\n", i, taskid, total_end - total_start );
+		}
 	}
 
 
