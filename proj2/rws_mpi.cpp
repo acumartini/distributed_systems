@@ -29,7 +29,6 @@ int num_rounds;
 
 // message passing variables
 MPI_Datatype ExtNode_type;
-// int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
 int *counts, *disp, size;
 ExtNode *snodes, *rnodes;
 
@@ -94,18 +93,9 @@ void init_message_buffers() {
 	Node *node;
 	GraphSize partition;
 
-	// inti storage
-	// scounts = new unsigned long[numtasks];
-	// rcounts = new unsigned long[numtasks];
-	// sdisp = new unsigned long[numtasks];
-	// rdisp = new unsigned long[numtasks];
-	// scounts=(int*)malloc(sizeof(int)*numtasks);
-	// rcounts=(int*)malloc(sizeof(int)*numtasks);
-	// sdisp=(int*)malloc(sizeof(int)*numtasks);
-	// rdisp=(int*)malloc(sizeof(int)*numtasks);
-
-	counts=(int*)malloc(sizeof(int)*numtasks);
-	disp=(int*)malloc(sizeof(int)*numtasks);
+	// init storage
+	counts = (int*) malloc( sizeof(int)*numtasks );
+	disp = (int*) malloc( sizeof(int)*numtasks );
 
 	// count external dependencies
 	for ( int i=0; i<numtasks; ++i ){
@@ -121,27 +111,7 @@ void init_message_buffers() {
 		}
 	}
 
-	// exchange send count info
-	// MPI_Alltoall( scounts, 1, MPI_INT,
-	// 			  rcounts, 1, MPI_INT,
-	// 			  MPI_COMM_WORLD );
-
-	// calculate displacements and buffer sizes
-	// sdisp[0]=0;
-	// for( int i=1; i<numtasks; ++i ) {
-	// 	sdisp[i] = scounts[i-1] + sdisp[i-1];
-	// }
-	// rdisp[0]=0;
-	// for( int i=1; i<numtasks; ++i ) {
-	// 	rdisp[i] = rcounts[i-1] + rdisp[i-1];
-	// }
-	// ssize = 0;
-	// rsize = 0;
-	// for( int i=0; i<numtasks; ++i ) {
-	// 	ssize += scounts[i];
-	// 	rsize += rcounts[i];
-	// }
-
+	// compute send/receive displacements
 	disp[0]=0;
 	for( int i=1; i<numtasks; ++i ) {
 		disp[i] = counts[i-1] + disp[i-1];
@@ -152,8 +122,8 @@ void init_message_buffers() {
 	}
 
 	// initialize send/receive buffers
-	snodes = (ExtNode*)malloc(sizeof(ExtNode)*size); //new ExtNode[ssize];
-	rnodes = (ExtNode*)malloc(sizeof(ExtNode)*size); //new ExtNode[rsize];
+	snodes = (ExtNode*)malloc(sizeof(ExtNode)*size);
+	rnodes = (ExtNode*)malloc(sizeof(ExtNode)*size);
 	for ( GraphSize i=0; i<size; ++i ) {
 		snodes[i] = ExtNode();
 	}
@@ -359,18 +329,6 @@ int main (int argc, char *argv[]) {
 
 	/* FINALIZE */
 	// free heap memory
-	// delete scounts;
-	// delete rcounts;
-	// delete sdisp;
-	// delete rdisp;
-	// delete snodes;
-	// delete rnodes;
-	// free( scounts );
-	// free( rcounts );
-	// free( sdisp );
-	// free( rdisp );
-	// free( snodes );
-	// free( rnodes );
 	free( counts );
 	free( disp );
 	free( snodes );
