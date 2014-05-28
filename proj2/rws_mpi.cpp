@@ -29,7 +29,7 @@ int num_rounds;
 
 // message passing variables
 MPI_Datatype ext_node_type;
-int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
+GraphSize *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
 ExtNode *snodes, *rnodes;
 
 
@@ -96,10 +96,10 @@ void init_message_buffers() {
 	printf( "Entering init_message buffers\n" );
 	
 	// inti storage
-	scounts = new int[numtasks];
-	rcounts = new int[numtasks];
-	sdisp = new int[numtasks];
-	rdisp = new int[numtasks];
+	scounts = new unsigned long[numtasks];
+	rcounts = new unsigned long[numtasks];
+	sdisp = new unsigned long[numtasks];
+	rdisp = new unsigned long[numtasks];
 
 	// count sends
 	for ( int i=0; i<numtasks; ++i ){
@@ -117,9 +117,10 @@ void init_message_buffers() {
 
 	// exchange send count info
     printf( "Alltoall\n" );
-	MPI_Alltoall( &scounts, 1, MPI_INT,
-				  &rcounts, 1, MPI_INT,
+	MPI_Alltoall( &scounts, 1, MPI_UNSIGNED_LONG,
+				  &rcounts, 1, MPI_UNSIGNED_LONG,
 				  MPI_COMM_WORLD );
+	printf( "Alltoall finished\n" );
 
 	// calculate displacements and buffer sizes
 	sdisp[0]=0;
@@ -130,12 +131,13 @@ void init_message_buffers() {
 	for( int i=1; i<numtasks; ++i ) {
 		rdisp[i] = rcounts[i-1] + rdisp[i-1];
 	}
-	ssize=0;
-	rsize=0;
+	ssize = 0;
+	rsize = 0;
 	for( int i=1; i<numtasks; ++i ) {
 		ssize += scounts[i];
 		rsize += rcounts[i];
 	}
+	printf( "computed sizes ssize = %lu rrsize = %lu\n", ssize, rsize );
 
 	// initialize send/receive buffers
 	snodes = new ExtNode[ssize];
