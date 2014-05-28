@@ -225,7 +225,7 @@ void credit_update ( CreditVec &C ) {
 	Node *node;
 
 	// compute credit for the next time step
-	#pragma omp parallel for private( sum, node, id ) shared( C, C_ )
+	#pragma omp parallel for private( sum, node, id ) shared( C )
 	for ( GraphSize i = 0; i < partvec.size(); ++i ) {
 		node = nodevec[partvec[i]];
 		id = node->id();
