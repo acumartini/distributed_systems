@@ -211,7 +211,7 @@ void write_output ( std::vector<CreditVec> updates ) {
 	Node *node;
 	
 	// sort nodevec by id
-   	std::sort( partvec.begin(), partvec.end(), nodecomp() );
+   	std::sort( partvec.begin(), partvec.end() );
 
 	for ( auto& id : partvec ) {
 		node = nodevec[id];
