@@ -1,4 +1,4 @@
 *.dat
 *.o
 /Debug
-fl_pageRank2_wl5.txt
+data/

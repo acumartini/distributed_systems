@@ -1,9 +1,9 @@
-CC=g++-4.8
+CC=mpic++
 
-rws: rws.cpp
-	$(CC) -o rws -O2 utils.cpp rws.cpp -std=c++0x -fopenmp
+rws: rws_mpi.cpp
+	$(CC) -std=c++0x -o rws_mpi -O2 utils.cpp rws_mpi.cpp -Wall -Wextra -fopenmp
 
-all: rws
+all: rws_mpi
 
 clean:
-	rm -f rws
+	rm -f rws_mpi
