@@ -11,7 +11,7 @@
 #include <assert.h>
 
 #include "mpi.h"
-// #include "omp.h"
+#include "omp.h"
 #include "utils.h"
 #include "node.h"
 
@@ -83,10 +83,12 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 			if ( taskid == partition ) {
 				partvec.push_back( source );
 				srcnode->setIndex( cur_index++ );
+                //printf( "source %lu index %lu\n", source, srcnode->index() );
 			}
 		}
 	}
 	partfile.close();
+    //assert( false );
 }
 
 void init_message_buffers() {
@@ -119,7 +121,7 @@ void init_message_buffers() {
 		}
 	}
 	for ( int i=0; i<numtasks; ++i ) {
-		printf( "parition %d scounts[%d] = %d\n", taskid, scounts[i] ); 
+		printf( "parition %d scounts[%d] = %d\n", taskid, i, scounts[i] ); 
 	}
 
 	// exchange send count info
@@ -144,7 +146,7 @@ void init_message_buffers() {
 		ssize += scounts[i];
 		rsize += rcounts[i];
 	}
-	printf( "computed sizes ssize = %lu rrsize = %lu\n", ssize, rsize );
+	printf( "computed sizes ssize = %d rrsize = %d\n", ssize, rsize );
 
 	// initialize send/receive buffers
 	snodes = new ExtNode[ssize];
@@ -214,8 +216,10 @@ void credit_update ( CreditVec &C ) {
 		id = node->id();
 		sum = 0;
 		for ( auto& tarnode: *(node->getEdges()) ) {
+            // printf( "tarnode->credit() = %f, degree = %lu\n", tarnode->credit(), tarnode->degree() );
 			sum += tarnode->credit() / tarnode->degree();
 		}
+        // printf( "sum = %f node->index() = %lu\n", sum, node->index() );
 		C[node->index()] = sum;
 	}
 
@@ -255,8 +259,8 @@ int main (int argc, char *argv[]) {
 	double start, end;
 
 	// initialize/populate mpi specific vars local to each node
-	char hostname[MPI_MAX_PROCESSOR_NAME];
-	MPI_Status status;
+	// char hostname[MPI_MAX_PROCESSOR_NAME];
+	// MPI_Status status;
 	MPI_Init( &argc, &argv );
 	MPI_Comm_size( MPI_COMM_WORLD, &numtasks );
 	MPI_Comm_rank( MPI_COMM_WORLD, &taskid );
@@ -352,6 +356,9 @@ int main (int argc, char *argv[]) {
 		// compute credit update
 		start = omp_get_wtime();
 		credit_update( C );
+        //for ( auto& c : C ) {
+        //    printf( "%f\n", c );
+        //}
 
 		// store credit update before overwriting timestep t
 		updates[i] = C;

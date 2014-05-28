@@ -1,4 +1,5 @@
 *.dat
+*.out
 *.o
 /Debug
 data/

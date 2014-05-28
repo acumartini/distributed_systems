@@ -19,11 +19,14 @@ class Node {
 typedef std::vector<Node*> EdgeSet;
 
 public:
-	Node (): node_id( -1 ), edge_set( new EdgeSet() ) {} // default constructor
+	Node (): 
+        node_id( -1 ),
+        edge_set( new EdgeSet() ),
+        cur_credit( 1.0 ) {} // default constructor
 	Node ( const GraphSize& id ): 
 		node_id( id ),
 		edge_set( new EdgeSet() ),
-		cur_credit( 1 ) {}
+		cur_credit( 1.0 ) {}
 	~Node () { delete edge_set; }
 
 	const GraphSize& id () const { return node_id; }
