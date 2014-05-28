@@ -242,7 +242,7 @@ int main (int argc, char *argv[]) {
     std::string partition_file;
 	std::string edge_view_file;
 
-	if ( argc != 3 ) {
+	if ( argc != 4 ) {
 		if ( is_master ) {
 			printf( "Usage: mpiexec -np <num_partitions> ./rws_mpi "
 					"<nodes_to_partition> <edge_view> <num_rounds>\n");
@@ -276,7 +276,7 @@ int main (int argc, char *argv[]) {
 	// load nodes
 	if ( is_master ) {
 		printf( "Reading input files %s, %s:\n", 
-				partition_file.c_str(), edge_view_file.c_str() );
+				partition_file.c_str() edge_view_file.c_str() );
 	}
 	start = omp_get_wtime();
 	load_network( edge_view_file, partition_file  );
