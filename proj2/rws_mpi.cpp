@@ -154,8 +154,8 @@ void communicate_credit_updates() {
 			partition = tarnode->partition() ;
 			if ( taskid != partition ) {
 				// extnode = snodes[disp_counter[partition]];
-				snodes[disp_counter[partition]]->id = node->id();
-				snodes[disp_counter[partition]]->credit = node->credit();
+				snodes[disp_counter[partition]].id = node->id();
+				snodes[disp_counter[partition]].credit = node->credit();
 				disp_counter[partition]++;
 			}
 		}
@@ -207,11 +207,11 @@ void credit_update ( CreditVec &C ) {
  * Writes the network and random walk information to the given file.
  */
 void write_output ( std::vector<CreditVec> updates ) {
-	FILE * pfile = fopen ( std::to_string( taskid ) + ".out", "w" );
+	FILE *pfile = fopen ( std::to_string( taskid ) + std::string( ".out" ), "w" );
 	Node *node;
 	
 	// sort nodevec by id
-   	std::sort( partvec.begin(), partvec.end(), nodecomp() );
+   	std::sort( partvec.begin(), partvec.end() );
 
 	for ( auto& id : partvec ) {
 		node = nodevec[id];
