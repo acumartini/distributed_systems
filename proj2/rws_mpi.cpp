@@ -29,7 +29,8 @@ int num_rounds;
 
 // message passing variables
 MPI_Datatype ExtNode_type;
-int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
+// int *scounts, *rcounts, *sdisp, *rdisp, ssize, rsize;
+int *counts, *disp, size;
 ExtNode *snodes, *rnodes;
 
 
@@ -93,17 +94,18 @@ void init_message_buffers() {
 	Node *node;
 	GraphSize partition;
 
-	printf( "Entering init_message buffers\n" );
-	
 	// inti storage
 	// scounts = new unsigned long[numtasks];
 	// rcounts = new unsigned long[numtasks];
 	// sdisp = new unsigned long[numtasks];
 	// rdisp = new unsigned long[numtasks];
-	scounts=(int*)malloc(sizeof(int)*numtasks);
-	rcounts=(int*)malloc(sizeof(int)*numtasks);
-	sdisp=(int*)malloc(sizeof(int)*numtasks);
-	rdisp=(int*)malloc(sizeof(int)*numtasks);
+	// scounts=(int*)malloc(sizeof(int)*numtasks);
+	// rcounts=(int*)malloc(sizeof(int)*numtasks);
+	// sdisp=(int*)malloc(sizeof(int)*numtasks);
+	// rdisp=(int*)malloc(sizeof(int)*numtasks);
+
+	counts=(int*)malloc(sizeof(int)*numtasks);
+	disp=(int*)malloc(sizeof(int)*numtasks);
 
 	// count sends
 	for ( int i=0; i<numtasks; ++i ){
@@ -120,29 +122,34 @@ void init_message_buffers() {
 	}
 
 	// exchange send count info
-	MPI_Alltoall( scounts, 1, MPI_INT,
-				  rcounts, 1, MPI_INT,
-				  MPI_COMM_WORLD );
+	// MPI_Alltoall( scounts, 1, MPI_INT,
+	// 			  rcounts, 1, MPI_INT,
+	// 			  MPI_COMM_WORLD );
 
 	// calculate displacements and buffer sizes
-	sdisp[0]=0;
+	// sdisp[0]=0;
+	// for( int i=1; i<numtasks; ++i ) {
+	// 	sdisp[i] = scounts[i-1] + sdisp[i-1];
+	// }
+	// rdisp[0]=0;
+	// for( int i=1; i<numtasks; ++i ) {
+	// 	rdisp[i] = rcounts[i-1] + rdisp[i-1];
+	// }
+	// ssize = 0;
+	// rsize = 0;
+	// for( int i=0; i<numtasks; ++i ) {
+	// 	ssize += scounts[i];
+	// 	rsize += rcounts[i];
+	// }
+
+	disp[0]=0;
 	for( int i=1; i<numtasks; ++i ) {
-		sdisp[i] = scounts[i-1] + sdisp[i-1];
+		disp[i] = counts[i-1] + disp[i-1];
 	}
-	rdisp[0]=0;
-	for( int i=1; i<numtasks; ++i ) {
-		rdisp[i] = rcounts[i-1] + rdisp[i-1];
-	}
-	ssize = 0;
-	rsize = 0;
+	size = 0;
 	for( int i=0; i<numtasks; ++i ) {
-		ssize += scounts[i];
-		rsize += rcounts[i];
+		size += counts[i];
 	}
-	for ( int i=0; i<numtasks; ++i ) {
-		printf( "parition %d sdisp[%d] = %d rdisp[%d] = %d\n", taskid, i, sdisp[i], i, rdisp[i] ); 
-	}
-	printf( "parition %d computed sizes ssize = %d rrsize = %d\n", taskid, ssize, rsize );
 
 	// initialize send/receive buffers
 	snodes = (ExtNode*)malloc(sizeof(ExtNode)*ssize); //new ExtNode[ssize];
@@ -153,7 +160,6 @@ void init_message_buffers() {
 	for ( GraphSize i=0; i<rsize; ++i ) {
 		rnodes[i] = ExtNode();
 	}
-    printf( "Finished init\n" );
 }
 
 void communicate_credit_updates() {
@@ -163,7 +169,7 @@ void communicate_credit_updates() {
 
     std::vector<int> disp_counter;
     for ( int i=0; i<numtasks; ++i ) {
-		disp_counter.push_back( sdisp[i] );
+		disp_counter.push_back( disp[i] );
 	}
     
 	// populate sending nodes with credit updates
@@ -180,8 +186,8 @@ void communicate_credit_updates() {
     }
 
 	// communicate individual to all other nodes
-	MPI_Alltoallv( snodes, scounts, sdisp, ExtNode_type,
-				   rnodes, rcounts, rdisp, ExtNode_type,
+	MPI_Alltoallv( snodes, counts, disp, ExtNode_type,
+				   rnodes, counts, disp, ExtNode_type,
 				   MPI_COMM_WORLD );
 
 	// update local Node credit values
