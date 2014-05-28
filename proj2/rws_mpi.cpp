@@ -96,10 +96,14 @@ void init_message_buffers() {
 	printf( "Entering init_message buffers\n" );
 	
 	// inti storage
-	scounts = new unsigned long[numtasks];
-	rcounts = new unsigned long[numtasks];
-	sdisp = new unsigned long[numtasks];
-	rdisp = new unsigned long[numtasks];
+	// scounts = new unsigned long[numtasks];
+	// rcounts = new unsigned long[numtasks];
+	// sdisp = new unsigned long[numtasks];
+	// rdisp = new unsigned long[numtasks];
+	scounts=(GraphSize*)malloc(sizeof(GraphSize)*numtasks);
+	rcounts=(GraphSize*)malloc(sizeof(GraphSize)*numtasks);
+	sdisp=(GraphSize*)malloc(sizeof(GraphSize)*numtasks);
+	rdisp=(GraphSize*)malloc(sizeof(GraphSize)*numtasks);
 
 	// count sends
 	for ( int i=0; i<numtasks; ++i ){
@@ -361,12 +365,18 @@ int main (int argc, char *argv[]) {
 
 	/* FINALIZE */
 	// free heap memory
-	delete scounts;
-	delete rcounts;
-	delete sdisp;
-	delete rdisp;
-	delete snodes;
-	delete rnodes;
+	// delete scounts;
+	// delete rcounts;
+	// delete sdisp;
+	// delete rdisp;
+	// delete snodes;
+	// delete rnodes;
+	free( scounts );
+	free( rcounts );
+	free( sdisp );
+	free( rdisp );
+	free( snodes );
+	free( rnodes );
 	for ( auto& node: nodevec ) {
 		delete node;
 	}
