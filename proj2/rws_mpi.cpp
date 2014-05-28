@@ -83,10 +83,12 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 			if ( taskid == partition ) {
 				partvec.push_back( source );
 				srcnode->setIndex( cur_index++ );
+                //printf( "source %lu index %lu\n", source, srcnode->index() );
 			}
 		}
 	}
 	partfile.close();
+    //assert( false );
 }
 
 void init_message_buffers() {
@@ -214,8 +216,10 @@ void credit_update ( CreditVec &C ) {
 		id = node->id();
 		sum = 0;
 		for ( auto& tarnode: *(node->getEdges()) ) {
+            // printf( "tarnode->credit() = %f, degree = %lu\n", tarnode->credit(), tarnode->degree() );
 			sum += tarnode->credit() / tarnode->degree();
 		}
+        // printf( "sum = %f node->index() = %lu\n", sum, node->index() );
 		C[node->index()] = sum;
 	}
 
@@ -255,8 +259,8 @@ int main (int argc, char *argv[]) {
 	double start, end;
 
 	// initialize/populate mpi specific vars local to each node
-	char hostname[MPI_MAX_PROCESSOR_NAME];
-	MPI_Status status;
+	// char hostname[MPI_MAX_PROCESSOR_NAME];
+	// MPI_Status status;
 	MPI_Init( &argc, &argv );
 	MPI_Comm_size( MPI_COMM_WORLD, &numtasks );
 	MPI_Comm_rank( MPI_COMM_WORLD, &taskid );
@@ -340,7 +344,7 @@ int main (int argc, char *argv[]) {
 		printf("\nComputing the Credit Values for %d Rounds:\n", num_rounds);
 	}
 
-	CreditVec C( partvec.size(), 0 );
+	CreditVec C( partvec.size(), 1 );
 	std::vector<CreditVec> updates( num_rounds );
 
 	for (int i=0; i<num_rounds; ++i) {
@@ -352,6 +356,9 @@ int main (int argc, char *argv[]) {
 		// compute credit update
 		start = omp_get_wtime();
 		credit_update( C );
+        //for ( auto& c : C ) {
+        //    printf( "%f\n", c );
+        //}
 
 		// store credit update before overwriting timestep t
 		updates[i] = C;
