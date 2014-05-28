@@ -270,7 +270,7 @@ int main (int argc, char *argv[]) {
 	/* NETWORK INITIALIZATION */
 	// load network
 	if ( is_master ) {
-		printf( "Reading input files:\n\tnodes to partition - %s\n\tedge view - %s\n", 
+		printf( "Reading input files:\n\tnodes to partition %s\n\tedge view %s\n", 
 				partition_file.c_str(), edge_view_file.c_str() );
 	}
 	start = omp_get_wtime();
