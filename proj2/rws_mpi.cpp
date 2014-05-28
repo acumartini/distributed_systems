@@ -119,7 +119,7 @@ void init_message_buffers() {
 		}
 	}
 	for ( int i=0; i<numtasks; ++i ) {
-		printf( "parition %d scounts[%d] = %d\n", taskid, scounts[i] ); 
+		printf( "parition %d scounts[%d] = %d\n", taskid, i, scounts[i] ); 
 	}
 
 	// exchange send count info
@@ -144,7 +144,7 @@ void init_message_buffers() {
 		ssize += scounts[i];
 		rsize += rcounts[i];
 	}
-	printf( "computed sizes ssize = %lu rrsize = %lu\n", ssize, rsize );
+	printf( "computed sizes ssize = %d rrsize = %d\n", ssize, rsize );
 
 	// initialize send/receive buffers
 	snodes = new ExtNode[ssize];
