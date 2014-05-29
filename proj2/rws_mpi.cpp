@@ -29,7 +29,8 @@ int num_rounds;
 
 // message passing variables
 MPI_Datatype ExtNode_type;
-int *counts, *disp, size;
+int *counts, *disp;
+size_t size;
 ExtNode *snodes, *rnodes;
 
 
@@ -109,7 +110,7 @@ void init_message_buffers() {
 		node = nodevec[id];
 		for ( auto& edge_node : *(node->getEdges()) ) {
 			partition = edge_node->partition();
-			if ( partition != taskid ) {
+			if ( partition != (unsigned) taskid ) {
 				counts[partition]++;
 			}
 		}
@@ -128,10 +129,10 @@ void init_message_buffers() {
 	// initialize send/receive buffers
 	snodes = (ExtNode*)malloc(sizeof(ExtNode)*size);
 	rnodes = (ExtNode*)malloc(sizeof(ExtNode)*size);
-	for ( GraphSize i=0; i<size; ++i ) {
+	for ( size_t i=0; i<size; ++i ) {
 		snodes[i] = ExtNode();
 	}
-	for ( GraphSize i=0; i<size; ++i ) {
+	for ( size_t i=0; i<size; ++i ) {
 		rnodes[i] = ExtNode();
 	}
 }
@@ -165,7 +166,7 @@ void communicate_credit_updates() {
 				   MPI_COMM_WORLD );
 
 	// update local Node credit values
-	for ( int i=0; i<size; ++i ) {
+	for ( size_t i=0; i<size; ++i ) {
 		id = rnodes[i].id;
 		node = nodevec[id];
 		node->setCredit( rnodes[i].credit );
