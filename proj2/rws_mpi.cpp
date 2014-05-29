@@ -45,27 +45,29 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 	std::ifstream edgefile( edge_view_file );
 	if ( edgefile.is_open() ) {
 		while ( edgefile >> source >> target ) { 
-			// check for resize
-			if ( source >= nodevec.size() || target >= nodevec.size() ) {
-				max = std::max( source, target );
-				cur_size = nodevec.size();
-				nodevec.resize( max + 1 );
-				while ( cur_size <= max ) {
-					nodevec[cur_size++] = new Node();
-				}
-			}
+			if ( source > 0 && target > 0 ) {
+                // check for resize
+                if ( (unsigned) source >= nodevec.size() || (unsigned) target >= nodevec.size() ) {
+                    max = std::max( source, target );
+                    cur_size = nodevec.size();
+                    nodevec.resize( max + 1 );
+                    while ( cur_size <= max ) {
+                        nodevec[cur_size++] = new Node();
+                    }
+                }
 
-			// get source node
-			srcnode = nodevec[source];
-			srcnode->setId( source );
+                // get source node
+                srcnode = nodevec[source];
+                srcnode->setId( source );
 
-			// get target node
-			tarnode = nodevec[target];
-			tarnode->setId( target );
+                // get target node
+                tarnode = nodevec[target];
+                tarnode->setId( target );
 
-			// add new undirected edge
-			srcnode->addEdge( tarnode );
-			tarnode->addEdge( srcnode );
+                // add new undirected edge
+                srcnode->addEdge( tarnode );
+                tarnode->addEdge( srcnode );
+            }
 		}
 	}
 	edgefile.close( );
@@ -75,15 +77,17 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 	if ( partfile.is_open() ) {
 		GraphSize cur_index = 0;
 		while ( partfile >> source >> degree >> partition ) {
-			srcnode = nodevec[source];
-			srcnode->setDegree( degree );
-			srcnode->setPartition( partition );
+            if ( source > 0 ) {
+                srcnode = nodevec[source];
+                srcnode->setDegree( degree );
+                srcnode->setPartition( partition );
 
-			// record id and index for local nodes
-			if ( taskid == partition ) {
-				partvec.push_back( source );
-				srcnode->setIndex( cur_index++ );
-			}
+                // record id and index for local nodes
+                if ( taskid == partition ) {
+                    partvec.push_back( source );
+                    srcnode->setIndex( cur_index++ );
+                }
+            }
 		}
 	}
 	partfile.close();
@@ -177,14 +181,12 @@ void communicate_credit_updates() {
  */
 void credit_update ( CreditVec &C ) {
 	double sum;
-	GraphSize id;
 	Node *node;
 
 	// compute credit for the next time step
-	#pragma omp parallel for private( sum, node, id ) shared( C )
-	for ( GraphSize i = 0; i < partvec.size(); ++i ) {
+	#pragma omp parallel for private( sum, node ) shared( C )
+	for ( size_t i=0; i<partvec.size(); ++i ) {
 		node = nodevec[partvec[i]];
-		id = node->id();
 		sum = 0;
 		for ( auto& tarnode: *(node->getEdges()) ) {
 			sum += tarnode->credit() / tarnode->degree();
@@ -194,7 +196,7 @@ void credit_update ( CreditVec &C ) {
 
 	// update credit for nodes in this partition
 	#pragma omp parallel for private( node )
-	for ( GraphSize i = 0; i < partvec.size(); ++i ) {
+	for ( size_t i=0; i<partvec.size(); ++i ) {
 		node = nodevec[partvec[i]];
 		node->setCredit( C[node->index()] );
 	}
@@ -214,7 +216,7 @@ void write_output ( std::vector<CreditVec> updates ) {
 		node = nodevec[id];
 		fprintf( pfile, "%lu\t%lu", id, node->degree() );
 		// output update values for node n
-		for ( int i = 0; i < updates.size(); ++i ) {
+		for ( size_t i=0; i<updates.size(); ++i ) {
 			fprintf( pfile, "\t%.6lf", updates[i][node->index()] );
 		}
 		fprintf( pfile, "\n" );
@@ -225,7 +227,7 @@ void write_output ( std::vector<CreditVec> updates ) {
 
 
 int main (int argc, char *argv[]) {
-	double start, end, total_start, total_end;
+	double start, end, total_start=0, total_end=0;
 
 	// initialize/populate mpi specific vars local to each node
 	MPI_Init( &argc, &argv );
@@ -302,7 +304,7 @@ int main (int argc, char *argv[]) {
 	CreditVec C( partvec.size(), 0 );
 	std::vector<CreditVec> updates( num_rounds );
 
-	for (int i=1; i<=num_rounds; ++i) {
+	for (int i=0; i<num_rounds; ++i) {
 		if ( is_master ) {
 			total_start = omp_get_wtime();
 		}
@@ -311,19 +313,20 @@ int main (int argc, char *argv[]) {
 		start = omp_get_wtime();
 		credit_update( C );
 
-		// store credit update before overwriting timestep t
+		// store credit update
 		updates[i] = C;
 		end = omp_get_wtime();
-		printf( "--- time for round %d, partition %d = %f seconds\n", i, taskid, end - start );
-
-		// send/recieve credit updates
-		communicate_credit_updates();
+		printf( "--- time for round %d, partition %d = %f seconds\n", i+1, taskid, end - start );
 
 		// wait for all processes to finish
 		MPI_Barrier( MPI_COMM_WORLD );
-		if ( is_master ) {
+
+		// send/recieve credit updates
+		communicate_credit_updates();
+		
+        if ( is_master ) {
 			total_end = omp_get_wtime();
-			printf( "total time for round %d: %f seconds\n", i, taskid, total_end - total_start );
+			printf( "total time for round %d: %f seconds\n", i+1, total_end - total_start );
 		}
 	}
 
