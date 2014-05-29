@@ -45,9 +45,9 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 	std::ifstream edgefile( edge_view_file );
 	if ( edgefile.is_open() ) {
 		while ( edgefile >> source >> target ) { 
-			if ( source > 0 && target > 0 ) {
+			if ( source > 0 && target > 0 ) { // verify unsigned input
                 // check for resize
-                if ( (unsigned) source >= nodevec.size() || (unsigned) target >= nodevec.size() ) {
+                if ( source >= nodevec.size() || target >= nodevec.size() ) {
                     max = std::max( source, target );
                     cur_size = nodevec.size();
                     nodevec.resize( max + 1 );
@@ -77,7 +77,7 @@ void load_network( std::string edge_view_file, std::string partition_file ) {
 	if ( partfile.is_open() ) {
 		GraphSize cur_index = 0;
 		while ( partfile >> source >> degree >> partition ) {
-            if ( source > 0 ) {
+            if ( source > 0 ) { // verify unsigned input
                 srcnode = nodevec[source];
                 srcnode->setDegree( degree );
                 srcnode->setPartition( partition );
@@ -283,10 +283,10 @@ int main (int argc, char *argv[]) {
 
 	/* INITIALIZE MESSAGE PASSING INFRASTRUCTURE */
 	// define a custom datatype for sending external node credit structs
-    MPI_Datatype types[2] = { MPI_LONG, MPI_DOUBLE };
+    MPI_Datatype types[2] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
     int blocklen[2] = { 1, 1 };
     MPI_Aint extent, lower_bound;
-    MPI_Type_get_extent( MPI_LONG, &lower_bound, &extent );
+    MPI_Type_get_extent( MPI_UNSIGNED_LONG, &lower_bound, &extent );
     MPI_Aint offsets[2] = { 0, 1*extent };
     MPI_Type_create_struct( 2, blocklen, offsets, types, &ExtNode_type );
     MPI_Type_commit( &ExtNode_type );
