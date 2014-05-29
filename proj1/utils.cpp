@@ -11,6 +11,11 @@ typedef std::vector<double> CreditVec;
 
 namespace utils {
 
+bool fexists ( const std::string filename ) {
+  std::ifstream ifile(filename);
+  return ifile;
+}
+
 /*
  * Outputs the time elapsed between t1 and t2 in seconds to standard output.
  */
