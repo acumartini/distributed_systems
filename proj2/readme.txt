@@ -17,10 +17,11 @@ Does your program generate the correct results with 2 and 4 partitions on ix-tru
 
 Does your program have a limit for the number of nodes in the input graph? Yes
 If yes, what is the limit on graph size that your program can handle?
-I am using unsigned long for node id's, which limits the graph to 2^32 = 4,294,967,296 nodes.  
-However, MPI_Alltoallv requires integer arrays as input for buffer chunking, which should impose
-additional constraints to the size of each partition.  So far have not had any issues related to 
-this limitation and the 2 partition example with over 1 million nodes per partition executed correctly.
+I am using unsigned long for node id's, which limits the graph to 2^64 = 1.84467441e19 Nodes.  
+However, MPI_Alltoallv requires integer arrays as input for buffer chunking, which imposes
+an additional constraint on the number of Nodes partitions can exchange in a single communication.
+Communication could be divided to allow for larger graphs, but the current limit imposed by the
+integer constraint is 2^31-1 = 2,147,483,647 Nodes per partition.
 
 How long does it take for your program to read the input file on ix-trusty?
 Roughly 26 seconds on each partition.
