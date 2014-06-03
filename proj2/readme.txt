@@ -27,4 +27,5 @@ How long does it take for your program to read the input file on ix-trusty?
 Roughly 26 seconds on each partition.
 
 How long does it take for your program (on average) to complete each round of processing on ix-trusty?
-~1.5 seconds on each partition and ~3 seconds total for a round including communication overhead
+2 Partitions: ~2 seconds on each partition and ~4.5 seconds total for a round including communication overhead
+4 Partitions: ~1.5 seconds on each partition and ~3 seconds total for a round including communication overhead
